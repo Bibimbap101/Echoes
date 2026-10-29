@@ -182,7 +182,7 @@ h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.025em; }
 .story-bars { display: flex; gap: 4px; width: min(360px, 100%); }
 .story-bars i { flex: 1; height: 3px; border-radius: 3px; background: rgb(255 255 255 / 0.25); transition: background-color 0.2s; }
 .story-bars i.on { background: var(--text); }
-.story-stage { width: min(360px, 100%); touch-action: pan-y; user-select: none; cursor: pointer; overflow: hidden; border-radius: 16px; }
+.story-stage { container-type: inline-size; width: min(360px, 100%); touch-action: pan-y; user-select: none; cursor: pointer; overflow: hidden; border-radius: 16px; }
 .story-slide { animation: slide-in 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .story-slide.from-left { animation-name: slide-in-left; }
 @keyframes slide-in { from { opacity: 0; transform: translateX(24px); } }
@@ -190,9 +190,9 @@ h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.025em; }
 .story-actions { display: flex; gap: 12px; align-items: center; }
 .story-actions .pill:disabled { opacity: 0.4; cursor: default; }
 
-/* The card itself scales with its width, so the saved image matches what you see. */
+/* The card scales with the stage's width (cqw can't measure the box it's on), so the saved image matches what you see. */
 .story-card {
-  container-type: inline-size; position: relative; aspect-ratio: 9 / 16; border-radius: 16px; overflow: hidden;
+  position: relative; aspect-ratio: 9 / 16; border-radius: 16px; overflow: hidden;
   display: flex; flex-direction: column; padding: 8cqw 7cqw 12cqw; color: var(--text); font-size: 4.2cqw; font-family: Figtree, system-ui, sans-serif;
 }
 .story-card.on-light { color: var(--black); }
