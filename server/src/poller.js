@@ -20,11 +20,9 @@ export async function pollUser(user) {
     artistName: track.artists[0]?.name,
     albumName: track.album?.name,
   }));
-  const added = await insertPlays(user._id, plays, 'poll');
-
-  // Full track objects come free with this call, so no lookup needed later.
-  for (const { track } of songs) await saveTrack(track);
-  return added;
+  // Covers first: if we stop halfway, a play is never left without its track (nothing would fill it in later).
+  for (const { track } of songs) await saveTrack(track); // full track objects come free with this call
+  return insertPlays(user._id, plays, 'poll');
 }
 
 export function startPoller() {
