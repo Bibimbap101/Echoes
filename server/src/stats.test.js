@@ -1,6 +1,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseRange, streaks, zonedMidnight } from './stats.js';
+import { parseRange, streaks, zonedMidnight, personality } from './stats.js';
+
+test('personality: night-heavy, loyal listener', () => {
+  const p = personality({ streams: 100, night: 50, morning: 5, uniqueArtists: 10, uniqueTracks: 40, top5Streams: 70, skipRate: null });
+  assert.equal(p.title, 'The Night Owl Loyalist');
+  assert.equal(p.traits.length, 3); // no skip trait without imported skip data
+  assert.equal(personality({ streams: 0 }), null);
+  const q = personality({ streams: 90, night: 5, morning: 10, uniqueArtists: 20, uniqueTracks: 20, top5Streams: 30, skipRate: 0.4 });
+  assert.equal(q.title, 'The Replayer');
+  assert.equal(q.traits.at(-1).value, 'Skipper');
+});
 
 test('zonedMidnight: Manila midnight is 16:00 UTC the day before', () => {
   assert.equal(zonedMidnight('2026-01-15', 'Asia/Manila').toISOString(), '2026-01-14T16:00:00.000Z');

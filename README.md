@@ -81,6 +81,7 @@ All under `/api/stats`, and all need you to be logged in. `range` is `today`, `7
 | `/skips?range=life` | Skip rate and most-skipped songs (imported history only) |
 | `/first?q=LE SSERAFIM` | First time you played an artist or song (exact name, any case) |
 | `/recent?limit=20` | Recently played, with covers |
+| `/wrapped?range=1y` | Everything for a Wrapped story: totals, top 5 artists/tracks, top album, top genres, obsession (most-played song in one week), monthly eras, listening personality |
 
 ## Build phases
 
@@ -89,5 +90,5 @@ All under `/api/stats`, and all need you to be logged in. `range` is `today`, `7
 3. ✅ Counting endpoints (top lists for any range, stats)
 4. ✅ Mockups → Home + Top pages. Until enough history exists, the 4W/6M/1Y tabs fall back to Spotify's own top lists (rank only, no counts).
 5. ✅ Stats page + charts (plain SVG, no chart library)
-6. Wrapped data (obsession, eras, personality)
+6. ✅ Wrapped data (obsession, eras, personality)
 7. Mockups → Wrapped story cards + image download

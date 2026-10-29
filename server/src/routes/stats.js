@@ -12,7 +12,7 @@ statsRouter.get('/top/:type', async (req, res) => {
   res.json(await stats.top(req.user, req.params.type, req.query));
 });
 
-for (const name of ['summary', 'clock', 'timeline', 'streak', 'skips', 'recent']) {
+for (const name of ['summary', 'clock', 'timeline', 'streak', 'skips', 'recent', 'wrapped']) {
   statsRouter.get(`/${name}`, async (req, res) => res.json(await stats[name](req.user._id, req.query)));
 }
 statsRouter.get('/first', async (req, res) => res.json(await stats.firstListened(req.user._id, req.query)));

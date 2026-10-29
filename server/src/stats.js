@@ -272,6 +272,96 @@ export async function skips(userId, query) {
   };
 }
 
+const pct = (x) => `${Math.round(x * 100)}%`;
+
+// Listening personality from *how* you listen (Spotify removed audio features, so not from how songs sound).
+export function personality({ streams, night, morning, uniqueArtists, uniqueTracks, top5Streams, skipRate }) {
+  if (!streams) return null;
+  const time = night / streams > 0.35 ? 'Night Owl' : morning / streams > 0.4 ? 'Early Bird' : null;
+  const taste = top5Streams / streams > 0.5 ? 'Loyalist' : uniqueArtists / streams > 0.25 ? 'Explorer' : null;
+  const perSong = streams / Math.max(uniqueTracks, 1);
+  const replay = perSong >= 3 ? 'Replayer' : 'Variety Seeker';
+  return {
+    title: `The ${time ? `${time} ` : ''}${taste ?? replay}`,
+    traits: [
+      { name: 'Time of day', value: time ?? 'All-Day Listener', detail: `${pct(night / streams)} of your streams were between 10 PM and 4 AM` },
+      { name: 'Taste', value: taste ?? 'Balanced', detail: `Your top 5 artists made up ${pct(top5Streams / streams)} of your streams` },
+      { name: 'Replay', value: replay, detail: `${perSong.toFixed(1)} plays per song on average` },
+      ...(skipRate == null ? [] : [{ name: 'Skips', value: skipRate > 0.3 ? 'Skipper' : 'Patient', detail: `You skipped ${pct(skipRate)} of songs` }]),
+    ],
+  };
+}
+
+// Everything a Wrapped story needs, for any range (defaults to the last year).
+export async function wrapped(userId, query) {
+  const period = parseRange({ range: '1y', ...query });
+  const streamsOnly = { ...matchFor(userId, period, query), msPlayed: { $gte: STREAM_MIN_MS } };
+  const one = (type, limit) => topItems(userId, type, period, query, limit);
+
+  const [sum, artists, tracks, albums, genres, skipData, [tod], [obsession], eras] = await Promise.all([
+    totals(userId, period, query),
+    one('artists', 5),
+    one('tracks', 5),
+    one('albums', 1),
+    one('genres', 3),
+    skips(userId, { range: '1y', ...query }),
+    Play.aggregate([
+      { $match: streamsOnly },
+      { $set: { h: { $hour: { date: '$playedAt', timezone: TZ } } } },
+      {
+        $group: {
+          _id: null,
+          night: { $sum: { $cond: [{ $or: [{ $gte: ['$h', 22] }, { $lt: ['$h', 4] }] }, 1, 0] } },
+          morning: { $sum: { $cond: [{ $and: [{ $gte: ['$h', 5] }, { $lt: ['$h', 11] }] }, 1, 0] } },
+        },
+      },
+    ]),
+    // The song you played most within a single week.
+    Play.aggregate([
+      { $match: streamsOnly },
+      {
+        $group: {
+          _id: { week: { $dateTrunc: { date: '$playedAt', unit: 'week', timezone: TZ, startOfWeek: 'monday' } }, trackId: '$trackId' },
+          streams: { $sum: 1 }, name: { $first: '$trackName' }, artist: { $first: '$artistName' },
+        },
+      },
+      { $sort: { streams: -1 } },
+      { $limit: 1 },
+      { $set: { trackId: '$_id.trackId' } },
+      ...coverLookup,
+    ]),
+    // Top artist of each month.
+    Play.aggregate([
+      { $match: streamsOnly },
+      { $group: { _id: { month: { $dateTrunc: { date: '$playedAt', unit: 'month', timezone: TZ } }, artist: '$artistName' }, streams: { $sum: 1 } } },
+      { $sort: { '_id.month': 1, streams: -1 } },
+      { $group: { _id: '$_id.month', artist: { $first: '$_id.artist' }, streams: { $first: '$streams' } } },
+      { $sort: { _id: 1 } },
+      { $lookup: { from: 'artists', localField: 'artist', foreignField: 'name', as: 'a' } },
+      { $set: { image: { $first: '$a.image' } } },
+    ]),
+  ]);
+
+  return {
+    from: period.from, to: period.to,
+    ...sum,
+    topArtists: artists,
+    topTracks: tracks,
+    topAlbum: albums[0] ?? null,
+    topGenres: genres, // empty when Spotify gives no genres
+    obsession: obsession && {
+      name: obsession.name, artist: obsession.artist, image: obsession.image ?? null,
+      streams: obsession.streams, weekOf: localDate(obsession._id.week), spotifyUrl: openUrl('track', obsession.trackId),
+    },
+    eras: eras.map((e) => ({ month: localDate(e._id).slice(0, 7), artist: e.artist, streams: e.streams, image: e.image ?? null })),
+    personality: personality({
+      streams: sum.streams, night: tod?.night ?? 0, morning: tod?.morning ?? 0,
+      uniqueArtists: sum.uniqueArtists, uniqueTracks: sum.uniqueTracks,
+      top5Streams: artists.reduce((n, a) => n + a.streams, 0), skipRate: skipData.skipRate,
+    }),
+  };
+}
+
 // First time you played an artist or song, searched by exact name (any case). Artists win over songs.
 export async function firstListened(userId, { q }) {
   const name = String(q ?? '').trim();
