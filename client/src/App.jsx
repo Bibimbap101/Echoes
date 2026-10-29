@@ -3,6 +3,7 @@ import Home from './Home.jsx';
 import Top from './Top.jsx';
 import Import from './Import.jsx';
 import Stats from './Stats.jsx';
+import Wrapped from './Wrapped.jsx';
 
 const PAGES = [
   ['home', 'Home'],
@@ -63,12 +64,7 @@ export default function App() {
         {page === 'top' && <Top />}
         {page === 'import' && <Import me={me} onLogout={logout} />}
         {page === 'stats' && <Stats />}
-        {page === 'wrapped' && (
-          <div className="page empty">
-            <h1>Wrapped</h1>
-            <p className="sub">Coming in Phase 7.</p>
-          </div>
-        )}
+        {page === 'wrapped' && <Wrapped />}
       </main>
     </div>
   );

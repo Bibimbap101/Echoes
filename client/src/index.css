@@ -175,6 +175,54 @@ h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.025em; }
 .first img, .first .ph { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; }
 .first .round { border-radius: 50%; }
 
+/* Wrapped */
+.wrapped-start { display: grid; gap: 20px; justify-items: start; padding: 32px; border-radius: 12px; background: var(--raised); max-width: 560px; }
+.wrapped-start .logo { padding: 0; font-size: 1.1rem; }
+.story { display: grid; gap: 14px; justify-items: center; }
+.story-bars { display: flex; gap: 4px; width: min(360px, 100%); }
+.story-bars i { flex: 1; height: 3px; border-radius: 3px; background: rgb(255 255 255 / 0.25); transition: background-color 0.2s; }
+.story-bars i.on { background: var(--text); }
+.story-stage { width: min(360px, 100%); touch-action: pan-y; user-select: none; cursor: pointer; overflow: hidden; border-radius: 16px; }
+.story-slide { animation: slide-in 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.story-slide.from-left { animation-name: slide-in-left; }
+@keyframes slide-in { from { opacity: 0; transform: translateX(24px); } }
+@keyframes slide-in-left { from { opacity: 0; transform: translateX(-24px); } }
+.story-actions { display: flex; gap: 12px; align-items: center; }
+.story-actions .pill:disabled { opacity: 0.4; cursor: default; }
+
+/* The card itself scales with its width, so the saved image matches what you see. */
+.story-card {
+  container-type: inline-size; position: relative; aspect-ratio: 9 / 16; border-radius: 16px; overflow: hidden;
+  display: flex; flex-direction: column; padding: 8cqw 7cqw 12cqw; color: var(--text); font-size: 4.2cqw; font-family: Figtree, system-ui, sans-serif;
+}
+.story-card.on-light { color: var(--black); }
+.story-card .k { font-weight: 700; font-size: 1em; line-height: 1.35; opacity: 0.9; }
+.story-card .big { font-weight: 900; letter-spacing: -0.045em; line-height: 0.95; }
+.story-card .huge { font-size: 4.4em; margin-top: auto; }
+.story-card .unit { font-size: 1.6em; font-weight: 800; margin-top: 0.2em; }
+.story-card .fact { margin-top: 1.2em; }
+.story-card .name { font-size: 2.5em; margin: 0.15em 0 0.3em; overflow-wrap: anywhere; }
+.story-card .title { font-size: 2.1em; margin-bottom: 0.6em; }
+.story-card .accent { color: var(--acc); }
+.story-card .dim { display: block; opacity: 0.7; font-weight: 600; }
+.story-art { width: 78%; aspect-ratio: 1; object-fit: cover; border-radius: 50%; margin: 1.2em auto 1em; display: block; background: rgb(0 0 0 / 0.2); }
+.story-art.square { border-radius: 8px; width: 72%; }
+.story-art.small { width: 58%; margin: 0 auto 1.2em; }
+.story-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.9em; }
+.story-list li { display: grid; grid-template-columns: 1.2em 3.2em minmax(0, 1fr); gap: 0.7em; align-items: center; }
+.story-list .n { color: var(--acc); font-size: 1.3em; }
+.story-list img, .story-list .ph { width: 3.2em; height: 3.2em; border-radius: 4px; object-fit: cover; }
+.story-list b, .story-list .dim { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.eras { display: grid; gap: 0.55em; }
+.eras p { display: grid; grid-template-columns: 3em minmax(0, 1fr); }
+.eras b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.traits { display: grid; gap: 1em; margin-top: 0.8em; }
+.summary { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1em 0.8em; }
+.summary b { display: block; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.summary .stat { font-size: 1.7em; font-weight: 900; letter-spacing: -0.03em; }
+.story-card .mark { position: absolute; left: 7cqw; bottom: 5cqw; font-weight: 900; font-size: 1.05em; letter-spacing: -0.03em; color: var(--acc); }
+.story-card.on-light .mark { color: var(--black); }
+
 @keyframes fade { from { opacity: 0; } }
 
 /* Phone: sidebar becomes a frosted tab bar at the bottom */

@@ -91,4 +91,4 @@ All under `/api/stats`, and all need you to be logged in. `range` is `today`, `7
 4. ✅ Mockups → Home + Top pages. Until enough history exists, the 4W/6M/1Y tabs fall back to Spotify's own top lists (rank only, no counts).
 5. ✅ Stats page + charts (plain SVG, no chart library)
 6. ✅ Wrapped data (obsession, eras, personality)
-7. Mockups → Wrapped story cards + image download
+7. ✅ Mockups → Wrapped story cards + image download (tap/swipe/arrow keys; each card saves as a 1080×1920 PNG)
