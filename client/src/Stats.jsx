@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApi, fmt, pctChange, get } from './api.js';
-import { Art, Pct, RangePicker, useRange } from './ui.jsx';
+import { Art, Liked, Pct, RangePicker, useRange } from './ui.jsx';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const hourLabel = (h) => (h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`);
@@ -165,6 +165,94 @@ function Skips({ query }) {
   );
 }
 
+// Songs added to Liked Songs per month. Bars, because each month is its own count.
+function LikedChart({ months }) {
+  const [hover, setHover] = useState(null);
+  const pts = fillGaps(months.map((m) => ({ date: `${m.month}-01`, minutes: m.songs })), 'month').slice(-24);
+  const W = 640, H = 160, B = 22, gap = 2;
+  const max = Math.max(1, ...pts.map((p) => p.minutes));
+  const bw = W / pts.length;
+  const monthLabel = (d) => new Date(`${d}T00:00:00`).toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+  const h = hover != null ? pts[hover] : null;
+  return (
+    <div className="chart">
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Songs liked per month" onMouseLeave={() => setHover(null)}>
+        <line x1={0} x2={W} y1={H - B} y2={H - B} stroke="#2a2a2a" />
+        {pts.map((p, i) => {
+          const bh = Math.max((p.minutes / max) * (H - B - 12), p.minutes ? 3 : 0);
+          return (
+            <g key={p.date} onMouseEnter={() => setHover(i)}>
+              <rect x={i * bw} y={0} width={bw} height={H - B} fill="transparent" />
+              <path
+                fill={hover === i ? '#fff' : '#1ed760'}
+                d={`M${i * bw + gap / 2},${H - B} v${-Math.max(bh - 4, 0)} q0,-4 4,-4 h${Math.max(bw - gap - 8, 0)} q4,0 4,4 v${Math.max(bh - 4, 0)} z`}
+                opacity={bh ? 1 : 0}
+              />
+            </g>
+          );
+        })}
+        <text x={0} y={H - 4} fill="#b3b3b3" fontSize="11">{monthLabel(pts[0].date)}</text>
+        <text x={W} y={H - 4} fill="#b3b3b3" fontSize="11" textAnchor="end">{monthLabel(pts.at(-1).date)}</text>
+      </svg>
+      {h && (
+        <div className="tip" style={{ left: `${(((hover + 0.5) * bw) / W) * 100}%`, top: `${((H - B - (h.minutes / max) * (H - B - 12)) / H) * 100}%` }}>
+          {monthLabel(h.date)} · {fmt(h.minutes)} liked
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Library({ r }) {
+  const { data: l } = useApi(r.query && `/api/stats/library?${r.query}`);
+  if (!l) return null;
+  if (!l.syncedAt && !l.likedSongs) return <p className="sub">Your library is syncing with Spotify. Check back in a minute.</p>;
+  const m = l.mostPlayedLiked;
+  return (
+    <>
+      <h2>Your library</h2>
+      <div className="stat-tiles">
+        <div className="tile-stat">
+          <span className="sub">Liked Songs</span>
+          <b>{fmt(l.likedSongs)}</b>
+          {r.range !== 'life' && <span className="sub"><span className="up">+{fmt(l.likedInRange)}</span> in the {r.label}</span>}
+        </div>
+        <Tile label="Saved albums" value={l.savedAlbums} />
+        <Tile label="Artists you follow" value={l.following} />
+        <Tile label="Playlists" value={l.playlists} />
+      </div>
+      <div className="two-up">
+        <section className="box">
+          <div className="box-head"><h2>Songs you liked</h2><span className="sub">per month</span></div>
+          {l.likedPerMonth.length ? <LikedChart months={l.likedPerMonth} /> : <p className="sub">You didn't like any songs in the {r.label}.</p>}
+        </section>
+        <section className="box">
+          <h2>Most played liked song</h2>
+          {m ? (
+            <a className="skip-row" href={m.spotifyUrl} target="_blank" rel="noreferrer">
+              <Art src={m.image} />
+              <span className="title"><b><Liked />{m.name}</b><span className="sub">{m.artist}</span></span>
+              <span className="sub">{fmt(m.streams)} streams</span>
+            </a>
+          ) : <p className="sub">None of your liked songs were played in this range.</p>}
+          <h2>Top artists you don't follow yet</h2>
+          {l.notFollowed.length ? (
+            <div className="skip-list">
+              {l.notFollowed.map((a) => (
+                <a key={a.id} className="skip-row" href={a.spotifyUrl ?? undefined} target="_blank" rel="noreferrer">
+                  <Art src={a.image} round />
+                  <span className="title"><b>{a.name}</b></span>
+                  <span className="sub">{fmt(a.streams)} streams</span>
+                </a>
+              ))}
+            </div>
+          ) : <p className="sub">You follow all your top artists.</p>}
+        </section>
+      </div>
+    </>
+  );
+}
+
 function FirstListened() {
   const [q, setQ] = useState('');
   const [result, setResult] = useState(undefined); // undefined = not searched yet, null = not found
@@ -231,6 +319,7 @@ export default function Stats() {
         <Skips query={r.query} />
       </div>
       <FirstListened />
+      <Library r={r} />
     </div>
   );
 }

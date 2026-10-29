@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { toPng } from 'html-to-image';
 import { get, fmt } from './api.js';
 import { useCoverColor } from './coverColor.js';
-import { Art } from './ui.jsx';
+import { Art, Liked } from './ui.jsx';
 
 const todayStr = () => new Date().toLocaleDateString('en-CA');
 const CHOICES = [
@@ -85,6 +85,24 @@ function buildCards(w, colors, title) {
         <Art src={o.image} className="story-art square" />
         <p className="big name">{o.name}</p>
         <p className="k">The week of {dayName(o.weekOf)}, you played it <b className="accent">{o.streams} times</b>.</p>
+      </Card>,
+    );
+  }
+  if (w.likedCount) {
+    const f = w.firstLiked;
+    cards.push(
+      <Card key="liked" bg="#121212" label="Liked songs">
+        <p className="k">{title}, you liked</p>
+        <p className="big huge accent">{fmt(w.likedCount)}</p>
+        <p className="unit">new {w.likedCount === 1 ? 'song' : 'songs'}</p>
+        {f?.name && (
+          <>
+            <p className="k fact">The first one was</p>
+            <ol className="story-list">
+              <li><span className="n"><Liked /></span><Art src={f.image} /><span><b>{f.name}</b><span className="dim">{f.artist}</span></span></li>
+            </ol>
+          </>
+        )}
       </Card>,
     );
   }
