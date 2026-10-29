@@ -1,6 +1,7 @@
 import { Play } from './models/Play.js';
 import { Track } from './models/Track.js';
 import { Artist } from './models/Artist.js';
+import { LikedSong } from './models/LikedSong.js';
 import { spotifyGet } from './spotify.js';
 
 export const TZ = process.env.TIMEZONE || 'Asia/Manila';
@@ -144,7 +145,16 @@ async function historyCovers(userId, from) {
 }
 
 // Top 100 for a range, each with its rank in the previous equal-length period (null = not in it).
+// Tracks also get `liked` (in Liked Songs).
 export async function top(user, type, query) {
+  const result = await rankTop(user, type, query);
+  if (type !== 'tracks') return result;
+  const liked = await LikedSong.find({ userId: user._id, trackId: { $in: result.items.map((t) => t.id) } }, { trackId: 1 }).lean();
+  const ids = new Set(liked.map((l) => l.trackId));
+  return { ...result, items: result.items.map((t) => ({ ...t, liked: ids.has(t.id) })) };
+}
+
+async function rankTop(user, type, query) {
   const userId = user._id;
   const period = parseRange(query);
   if (SPOTIFY_RANGE[query.range] && type !== 'albums' && type !== 'genres' && !(await historyCovers(userId, period.from))) {
@@ -342,9 +352,17 @@ export async function wrapped(userId, query) {
     ]),
   ]);
 
+  const liked = addedIn(userId, period);
+  const [likedCount, firstLiked] = await Promise.all([
+    LikedSong.countDocuments(liked),
+    LikedSong.findOne(liked).sort({ addedAt: 1 }).lean().then(likedTrack),
+  ]);
+
   return {
     from: period.from, to: period.to,
     ...sum,
+    likedCount,
+    firstLiked,
     topArtists: artists,
     topTracks: tracks,
     topAlbum: albums[0] ?? null,
@@ -390,4 +408,56 @@ export async function recent(userId, query) {
     trackId: p.trackId, name: p.trackName, artist: p.artistName, album: p.albumName,
     playedAt: p.playedAt, image: cover.get(p.trackId) ?? null, spotifyUrl: openUrl('track', p.trackId),
   }));
+}
+
+// Liked Songs added inside a range.
+const addedIn = (userId, { from, to }) => ({ userId, addedAt: { $lt: to, ...(from && { $gte: from }) } });
+
+async function likedTrack(row) {
+  if (!row) return null;
+  const t = await Track.findById(row.trackId, { name: 1, artistNames: 1, albumImage: 1 }).lean();
+  return {
+    id: row.trackId, addedAt: row.addedAt, name: t?.name ?? null, artist: t?.artistNames?.[0] ?? null,
+    image: t?.albumImage ?? null, spotifyUrl: openUrl('track', row.trackId),
+  };
+}
+
+// Your library: Liked Songs (all time and added in the range), counts from the last sync,
+// songs liked per month, your most played liked song, and top artists you don't follow.
+export async function library(user, query) {
+  const userId = user._id;
+  const period = parseRange({ range: '1y', ...query });
+  const lib = user.library ?? {};
+  const added = addedIn(userId, period);
+  const [likedSongs, likedInRange, perMonth, [most], artists] = await Promise.all([
+    LikedSong.countDocuments({ userId }),
+    LikedSong.countDocuments(added),
+    LikedSong.aggregate([
+      { $match: added },
+      { $group: { _id: { $dateToString: { date: '$addedAt', format: '%Y-%m', timezone: TZ } }, songs: { $sum: 1 } } },
+      { $sort: { _id: 1 } },
+    ]),
+    Play.aggregate([
+      { $match: { ...matchFor(userId, period, query), msPlayed: { $gte: STREAM_MIN_MS } } },
+      { $group: { _id: '$trackId', streams: { $sum: 1 }, name: { $first: '$trackName' }, artist: { $first: '$artistName' } } },
+      { $sort: { streams: -1 } },
+      { $lookup: { from: 'likedsongs', localField: '_id', foreignField: 'trackId', pipeline: [{ $match: { userId } }], as: 'l' } },
+      { $match: { l: { $ne: [] } } },
+      { $limit: 1 },
+      { $set: { trackId: '$_id' } },
+      ...coverLookup,
+    ]),
+    lib.syncedAt ? topItems(userId, 'artists', period, query, 50) : [],
+  ]);
+  const followed = new Set(lib.followedArtists ?? []);
+  return {
+    syncedAt: lib.syncedAt ?? null, // null = first sync hasn't finished yet
+    likedSongs, likedInRange,
+    savedAlbums: lib.savedAlbums ?? null, playlists: lib.playlists ?? null, following: lib.following ?? null,
+    likedPerMonth: perMonth.map((r) => ({ month: r._id, songs: r.songs })),
+    mostPlayedLiked: most
+      ? { id: most._id, name: most.name, artist: most.artist, image: most.image ?? null, streams: most.streams, spotifyUrl: openUrl('track', most._id) }
+      : null,
+    notFollowed: artists.filter((a) => !followed.has(a.name)).slice(0, 5),
+  };
 }

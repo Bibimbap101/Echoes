@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import { User } from '../models/User.js';
 import { exchangeCode, applyTokens } from '../spotify.js';
 import { pollUser } from '../poller.js';
+import { syncLibrary } from '../library.js';
 
 // Read-only. Liked Songs + saved albums, followed artists, playlists, and what's playing now.
 const SCOPES = [
@@ -50,6 +51,7 @@ authRouter.get('/callback', async (req, res) => {
   applyTokens(fields, tokens);
   const saved = await User.findOneAndUpdate({ spotifyId: me.id }, fields, { upsert: true, new: true });
   pollUser(saved).catch((err) => console.error('First poll failed:', err.message)); // start saving plays right away
+  syncLibrary(saved).catch((err) => console.error('First library sync failed:', err.message));
   res.cookie('uid', saved.id, { ...cookieOpts, maxAge: 365 * 24 * 3600_000 });
   res.redirect('/');
 });

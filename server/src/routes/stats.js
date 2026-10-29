@@ -15,4 +15,5 @@ statsRouter.get('/top/:type', async (req, res) => {
 for (const name of ['summary', 'clock', 'timeline', 'streak', 'skips', 'recent', 'wrapped']) {
   statsRouter.get(`/${name}`, async (req, res) => res.json(await stats[name](req.user._id, req.query)));
 }
+statsRouter.get('/library', async (req, res) => res.json(await stats.library(req.user, req.query)));
 statsRouter.get('/first', async (req, res) => res.json(await stats.firstListened(req.user._id, req.query)));

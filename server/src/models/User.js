@@ -9,6 +9,13 @@ const userSchema = new mongoose.Schema(
     accessToken: { type: String, required: true },
     refreshToken: { type: String, required: true },
     tokenExpiresAt: { type: Date, required: true },
+    library: {
+      savedAlbums: Number,
+      playlists: Number,
+      following: Number,
+      followedArtists: [String], // names, to match how plays group artists
+      syncedAt: Date,
+    },
   },
   { timestamps: true },
 );

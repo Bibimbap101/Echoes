@@ -42,7 +42,7 @@ export async function spotifyGet(user, path) {
     const res = await fetch(path.startsWith('http') ? path : API + path, {
       headers: { Authorization: `Bearer ${user.accessToken}` },
     });
-    if (res.ok) return res.json();
+    if (res.ok) return res.status === 204 ? null : res.json(); // 204 = nothing (e.g. nothing playing)
 
     if (res.status === 429 && attempt < MAX_RETRIES) {
       await sleep((Number(res.headers.get('retry-after')) || 1) * 1000);
