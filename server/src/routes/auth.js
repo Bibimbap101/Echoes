@@ -4,7 +4,16 @@ import { User } from '../models/User.js';
 import { exchangeCode, applyTokens } from '../spotify.js';
 import { pollUser } from '../poller.js';
 
-const SCOPES = 'user-read-recently-played user-top-read';
+// Read-only. Liked Songs + saved albums, followed artists, playlists, and what's playing now.
+const SCOPES = [
+  'user-read-recently-played',
+  'user-top-read',
+  'user-library-read',
+  'user-follow-read',
+  'playlist-read-private',
+  'playlist-read-collaborative',
+  'user-read-currently-playing',
+].join(' ');
 const cookieOpts = { httpOnly: true, sameSite: 'lax', signed: true };
 
 export const authRouter = Router();
