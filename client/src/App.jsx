@@ -4,6 +4,7 @@ import Top from './Top.jsx';
 import Import from './Import.jsx';
 import Stats from './Stats.jsx';
 import Wrapped from './Wrapped.jsx';
+import NowPlaying from './NowPlaying.jsx';
 
 const PAGES = [
   ['home', 'Home'],
@@ -66,6 +67,7 @@ export default function App() {
         {page === 'stats' && <Stats />}
         {page === 'wrapped' && <Wrapped />}
       </main>
+      <NowPlaying />
     </div>
   );
 }

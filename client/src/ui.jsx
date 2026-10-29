@@ -82,6 +82,14 @@ export const OpenIcon = () => (
   </span>
 );
 
+// Green check = in your Liked Songs.
+export const Liked = () => (
+  <svg className="liked" width="14" height="14" viewBox="0 0 24 24" role="img" aria-label="Liked">
+    <circle cx="12" cy="12" r="11" fill="currentColor" />
+    <path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#000" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 export function RankedRows({ items, round, showCounts = true }) {
   return (
     <div className="rows">
@@ -94,7 +102,7 @@ export function RankedRows({ items, round, showCounts = true }) {
           <span className="rank">{it.rank}</span>
           <Change rank={it.rank} prevRank={it.prevRank} />
           <Art src={it.image} round={round} />
-          <span className="title"><b>{it.name}</b>{it.artist && <span className="sub">{it.artist}</span>}</span>
+          <span className="title"><b>{it.liked && <Liked />}{it.name}</b>{it.artist && <span className="sub">{it.artist}</span>}</span>
           <span className="num">{showCounts ? fmt(it.streams) : '—'}</span>
           <span className="num sub mins">{showCounts ? fmt(it.minutes) : '—'}</span>
           <OpenIcon />
