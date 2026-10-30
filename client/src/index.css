@@ -27,8 +27,20 @@ h1, h2, p { margin: 0; }
 .privacy ul { margin: 0; padding-left: 1.2em; color: var(--sub); }
 
 /* Shell: black frame, sidebar + rounded main panel (Spotify's layout) */
-.shell { overflow: hidden; display: grid; grid-template-columns: 232px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 8px; padding: 8px; height: 100vh; }
-.side { display: flex; flex-direction: column; gap: 2px; padding: 20px 12px; background: var(--bg); border-radius: 8px; }
+.shell {
+  overflow: hidden; display: grid; grid-template-columns: var(--side-w, 232px) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 8px; padding: 8px; height: 100vh;
+  transition: grid-template-columns 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.shell.dragging { transition: none; cursor: col-resize; user-select: none; }
+.side { position: relative; z-index: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 20px 12px; background: var(--bg); border-radius: 8px; }
+.side-top { display: flex; align-items: center; justify-content: space-between; gap: 4px; padding-bottom: 20px; }
+.side-top .logo { padding-bottom: 0; min-width: 0; }
+.logo span, .nav .label { min-width: 0; overflow: hidden; white-space: nowrap; }
+/* Drag edge: sits in the gap between sidebar and page */
+.side-drag { position: absolute; top: 0; bottom: 0; right: -8px; width: 8px; cursor: col-resize; touch-action: none; outline: none; }
+.side-drag::after { content: ''; position: absolute; inset: 12px 2px; border-radius: 2px; transition: background-color 0.15s; }
+.side-drag:hover::after { background: #535353; }
+.dragging .side-drag::after, .side-drag:focus-visible::after { background: var(--acc); }
 .logo { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 1.6rem; letter-spacing: -0.04em; color: var(--acc); padding: 0 12px 20px; }
 .logo img { width: 1.25em; height: 1.25em; border-radius: 22%; }
 .nav { display: flex; align-items: center; gap: 14px; padding: 10px 12px; border-radius: 6px; font-weight: 700; color: var(--sub); transition: color 0.15s, background-color 0.15s; }
@@ -335,6 +347,23 @@ h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.025em; }
 [data-glow='off'] .main::before { display: none; }
 [data-motion='off'] *, [data-motion='off'] *::before, [data-motion='off'] *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 
+/* Closed sidebar: an icon rail, names show as a tip on hover */
+@media (min-width: 761px) {
+  .rail .side { padding-inline: 8px; align-items: center; }
+  .rail .side-top { flex-direction: column; gap: 12px; }
+  .rail .logo { padding: 0; }
+  .rail .logo span, .rail .me-who .title { display: none; }
+  .rail .nav { position: relative; justify-content: center; padding-inline: 0; width: 44px; }
+  .rail .nav .label {
+    position: absolute; left: calc(100% + 12px); top: 50%; transform: translateY(-50%); pointer-events: none; opacity: 0; transition: opacity 0.12s;
+    background: var(--text); color: var(--black); font-size: 0.75rem; padding: 5px 9px; border-radius: 4px;
+  }
+  .rail .nav:hover .label, .rail .nav:focus-visible .label { opacity: 1; }
+  .rail .me { padding-inline: 0; justify-items: center; }
+  .rail .me-who { padding: 0; }
+  .rail .me-bar { flex-direction: column; gap: 2px; }
+}
+
 /* Phone: sidebar becomes a frosted tab bar at the bottom */
 @media (max-width: 760px) {
   .shell { display: block; padding: 0; height: auto; }
@@ -343,7 +372,7 @@ h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.025em; }
     position: fixed; inset: auto 0 0 0; z-index: 10; flex-direction: row; justify-content: space-around; padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
     border-radius: 0; background: rgb(18 18 18 / 0.85); backdrop-filter: blur(20px) saturate(160%);
   }
-  .side .logo, .me { display: none; }
+  .side-top, .side-drag, .me { display: none; }
   .nav { flex-direction: column; gap: 3px; font-size: 0.7rem; padding: 6px 8px; }
   .nav svg { width: 22px; height: 22px; }
   .nav[aria-current='page'] { background: none; color: var(--acc); }

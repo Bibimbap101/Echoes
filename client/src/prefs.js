@@ -1,6 +1,6 @@
 // Settings page choices. Stored in this browser only.
 const KEY = 'echoes-prefs';
-const DEFAULTS = { glow: true, motion: true, start: 'home', range: '' }; // range '' = each page's own default
+const DEFAULTS = { glow: true, motion: true, start: 'home', range: '', sideW: 232, rail: false }; // range '' = each page's own default
 
 export function prefs() {
   try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY)) }; } catch { return { ...DEFAULTS }; }

@@ -6,7 +6,7 @@ import Stats from './Stats.jsx';
 import Wrapped from './Wrapped.jsx';
 import NowPlaying, { useNowPlaying } from './NowPlaying.jsx';
 import Settings from './Settings.jsx';
-import { prefs } from './prefs.js';
+import { prefs, setPref } from './prefs.js';
 import Privacy from './Privacy.jsx';
 import { Eq, SoundToggle } from './ui.jsx';
 import { forgetCache } from './api.js';
@@ -22,11 +22,64 @@ const PAGES = [
 
 const pageFromHash = () => location.hash.replace('#/', '') || prefs().start;
 
+// Sidebar width in px; dragging thinner than SNAP folds it into the icon rail
+const MIN_W = 220, MAX_W = 360, WIDTH = 232, SNAP = 150;
+const clampW = (w) => Math.min(MAX_W, Math.max(MIN_W, w));
+
+function useSidebar() {
+  const [w, setW] = useState(() => prefs().sideW);
+  const [rail, setRail] = useState(() => prefs().rail);
+  const [dragging, setDragging] = useState(false);
+  const save = (nw, nr) => { setW(nw); setRail(nr); setPref('sideW', nw); setPref('rail', nr); };
+  const toggle = () => setRail((r) => { setPref('rail', !r); return !r; });
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') { e.preventDefault(); toggle(); }
+    };
+    addEventListener('keydown', onKey);
+    return () => removeEventListener('keydown', onKey);
+  }, []);
+
+  function startDrag(e) {
+    const el = e.currentTarget;
+    el.setPointerCapture(e.pointerId);
+    const x0 = e.clientX, w0 = rail ? 72 : w;
+    let next = [w, rail];
+    setDragging(true);
+    el.onpointermove = (m) => {
+      const nw = w0 + m.clientX - x0;
+      next = nw < SNAP ? [w, true] : [clampW(nw), false];
+      setW(next[0]); setRail(next[1]);
+    };
+    el.onpointerup = el.onpointercancel = () => {
+      el.onpointermove = el.onpointerup = el.onpointercancel = null;
+      setDragging(false);
+      save(...next);
+    };
+  }
+
+  const handle = {
+    role: 'separator', 'aria-orientation': 'vertical', 'aria-label': 'Resize sidebar', tabIndex: 0,
+    'aria-valuenow': rail ? 72 : w, 'aria-valuemin': 72, 'aria-valuemax': MAX_W,
+    onPointerDown: startDrag,
+    onDoubleClick: () => save(WIDTH, false),
+    onKeyDown: (e) => {
+      const step = { ArrowLeft: -16, ArrowRight: 16 }[e.key];
+      if (!step) return;
+      e.preventDefault();
+      if (rail) { if (step > 0) save(w, false); } else if (step < 0 && w <= MIN_W) save(w, true); else save(clampW(w + step), false);
+    },
+  };
+  return { w, rail, dragging, toggle, handle };
+}
+
 export default function App() {
   const [me, setMe] = useState(undefined); // undefined = loading, null = logged out
   const [page, setPage] = useState(pageFromHash);
   const error = new URLSearchParams(location.search).get('error');
   const { np, at } = useNowPlaying(Boolean(me));
+  const side = useSidebar();
 
   useEffect(() => {
     fetch('/api/me')
@@ -62,13 +115,22 @@ export default function App() {
   }
 
   return (
-    <div className="shell">
+    <div
+      className={`shell${side.rail ? ' rail' : ''}${side.dragging ? ' dragging' : ''}`}
+      style={{ '--side-w': side.rail ? '72px' : `${side.w}px` }}
+    >
       <nav className="side" aria-label="Main">
-        <p className="logo"><img src="/icon.svg" alt="" />Echoes</p>
+        <div className="side-top">
+          <p className="logo"><img src="/icon.svg" alt="" /><span>Echoes</span></p>
+          <button className="icon-btn" onClick={side.toggle} aria-expanded={!side.rail} title={`${side.rail ? 'Open' : 'Close'} sidebar (Ctrl+B)`}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={side.rail ? 'M4 4h16v16H4zM9 4v16M14 10l2 2-2 2' : 'M4 4h16v16H4zM9 4v16M16 10l-2 2 2 2'} /></svg>
+            <span className="sr-only">{side.rail ? 'Open sidebar' : 'Close sidebar'}</span>
+          </button>
+        </div>
         {PAGES.map(([id, label, icon]) => (
           <a key={id} className="nav" href={`#/${id}`} aria-current={page === id ? 'page' : undefined}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={icon} /></svg>
-            {label}
+            <span className="label">{label}</span>
           </a>
         ))}
         <div className="me">
@@ -91,6 +153,7 @@ export default function App() {
             </button>
           </div>
         </div>
+        <div className="side-drag" {...side.handle} />
       </nav>
       <main className="main">
         {page === 'home' && <Home me={me} />}
