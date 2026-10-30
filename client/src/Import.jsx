@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { SoundToggle } from './ui.jsx';
 import { play } from './sound.js';
 
 const PIECE = 5000; // rows per request, ~2 MB
@@ -64,7 +63,7 @@ export default function Import({ me, onLogout }) {
         </div>
         <div className="account-actions">
           <button className="button ghost" onClick={onLogout}>Log out</button>
-          <SoundToggle />
+          <a className="button ghost" href="#/settings">Settings</a>
         </div>
       </section>
 

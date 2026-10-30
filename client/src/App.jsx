@@ -4,9 +4,11 @@ import Top from './Top.jsx';
 import Import from './Import.jsx';
 import Stats from './Stats.jsx';
 import Wrapped from './Wrapped.jsx';
-import NowPlaying from './NowPlaying.jsx';
+import NowPlaying, { useNowPlaying } from './NowPlaying.jsx';
+import Settings from './Settings.jsx';
+import { prefs } from './prefs.js';
 import Privacy from './Privacy.jsx';
-import { SoundToggle } from './ui.jsx';
+import { Eq, SoundToggle } from './ui.jsx';
 import { forgetCache } from './api.js';
 
 // [id, label, icon path (24px, stroked)]
@@ -18,12 +20,13 @@ const PAGES = [
   ['import', 'Your data', 'M16 8a4 4 0 1 1-8 0 4 4 0 0 1 8 0zM4 21a8 8 0 0 1 16 0'],
 ];
 
-const pageFromHash = () => location.hash.replace('#/', '') || 'home';
+const pageFromHash = () => location.hash.replace('#/', '') || prefs().start;
 
 export default function App() {
   const [me, setMe] = useState(undefined); // undefined = loading, null = logged out
   const [page, setPage] = useState(pageFromHash);
   const error = new URLSearchParams(location.search).get('error');
+  const { np, at } = useNowPlaying(Boolean(me));
 
   useEffect(() => {
     fetch('/api/me')
@@ -69,9 +72,24 @@ export default function App() {
           </a>
         ))}
         <div className="me">
-          {me.imageUrl && <img src={me.imageUrl} alt="" />}
-          <span>{me.displayName}</span>
-          <SoundToggle />
+          <div className="me-who">
+            {me.imageUrl ? <img src={me.imageUrl} alt="" className={np?.isPlaying ? 'live' : ''} /> : <span className="ph round" />}
+            <span className="title">
+              <b>{me.displayName}</b>
+              <span className="sub">{np?.isPlaying ? <><Eq />{np.name} · {np.artist}</> : 'Connected to Spotify'}</span>
+            </span>
+          </div>
+          <div className="me-bar">
+            <SoundToggle />
+            <a className="icon-btn" href="#/settings" aria-current={page === 'settings' ? 'page' : undefined} title="Settings">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></svg>
+              <span className="sr-only">Settings</span>
+            </a>
+            <button className="icon-btn" onClick={logout} title="Log out">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>
+              <span className="sr-only">Log out</span>
+            </button>
+          </div>
         </div>
       </nav>
       <main className="main">
@@ -81,8 +99,9 @@ export default function App() {
         {page === 'stats' && <Stats />}
         {page === 'wrapped' && <Wrapped />}
         {page === 'privacy' && <Privacy />}
+        {page === 'settings' && <Settings onLogout={logout} />}
       </main>
-      <NowPlaying />
+      <NowPlaying np={np} at={at} />
     </div>
   );
 }
