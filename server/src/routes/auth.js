@@ -15,7 +15,7 @@ const SCOPES = [
   'playlist-read-collaborative',
   'user-read-currently-playing',
 ].join(' ');
-const cookieOpts = { httpOnly: true, sameSite: 'lax', signed: true };
+const cookieOpts = { httpOnly: true, sameSite: 'lax', signed: true, secure: Boolean(process.env.VERCEL) }; // https-only when hosted
 
 export const authRouter = Router();
 
