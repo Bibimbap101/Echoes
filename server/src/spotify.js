@@ -19,8 +19,8 @@ async function tokenRequest(params) {
   return res.json();
 }
 
-export const exchangeCode = (code) =>
-  tokenRequest({ grant_type: 'authorization_code', code, redirect_uri: process.env.SPOTIFY_REDIRECT_URI });
+export const exchangeCode = (code, redirectUri) =>
+  tokenRequest({ grant_type: 'authorization_code', code, redirect_uri: redirectUri });
 
 // Applies a token response to a user doc (refresh responses may omit refresh_token).
 export function applyTokens(user, t) {

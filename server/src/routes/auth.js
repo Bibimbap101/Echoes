@@ -17,6 +17,11 @@ const SCOPES = [
 ].join(' ');
 const cookieOpts = { httpOnly: true, sameSite: 'lax', signed: true, secure: Boolean(process.env.VERCEL) }; // https-only when hosted
 
+// Hosted: built from the address people actually opened, so a renamed Vercel domain keeps working
+// (it still has to be listed under Redirect URIs in the Spotify dashboard).
+export const redirectUri = (req) =>
+  process.env.VERCEL ? `https://${req.get('x-forwarded-host') ?? req.get('host')}/api/auth/callback` : process.env.SPOTIFY_REDIRECT_URI;
+
 export const authRouter = Router();
 
 authRouter.get('/login', (req, res) => {
@@ -26,7 +31,7 @@ authRouter.get('/login', (req, res) => {
     response_type: 'code',
     client_id: process.env.SPOTIFY_CLIENT_ID,
     scope: SCOPES,
-    redirect_uri: process.env.SPOTIFY_REDIRECT_URI,
+    redirect_uri: redirectUri(req),
     state,
   });
   res.redirect(`https://accounts.spotify.com/authorize?${params}`);
@@ -39,7 +44,7 @@ authRouter.get('/callback', async (req, res) => {
   if (error) return res.redirect(`/?error=${encodeURIComponent(error)}`);
   if (!code || !state || state !== expected) return res.status(400).send('Login expired or invalid. Go back and try again.');
 
-  const tokens = await exchangeCode(code);
+  const tokens = await exchangeCode(code, redirectUri(req));
   const meRes = await fetch('https://api.spotify.com/v1/me', {
     headers: { Authorization: `Bearer ${tokens.access_token}` },
   });
