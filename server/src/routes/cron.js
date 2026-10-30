@@ -26,6 +26,10 @@ cronRouter.get('/', async (req, res) => {
     }
     report.users.push(r);
   }
-  report.covers = await enrichFor(ENRICH_MS);
+  try {
+    report.covers = await enrichFor(ENRICH_MS);
+  } catch (err) {
+    report.coversError = err.message;
+  }
   res.json(report);
 });

@@ -36,6 +36,7 @@ async function refresh(user) {
 
 // GET a Spotify API path for a user: refreshes the token when it's about to expire, waits out 429s.
 export async function spotifyGet(user, path) {
+  if (!user.refreshToken) throw Object.assign(new Error('Spotify login expired. Log in again.'), { status: 401 });
   if (user.tokenExpiresAt.getTime() - Date.now() < 60_000) await refresh(user);
 
   for (let attempt = 0; ; attempt++) {

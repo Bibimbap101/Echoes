@@ -14,10 +14,15 @@ export function seal(text) {
 }
 
 // Plain (pre-encryption) values pass through, so old rows keep working until they're next saved.
+// Sealed with a different SESSION_SECRET -> null, which means "log in again" (never a crash).
 export function unseal(text) {
   if (!text?.startsWith(PREFIX)) return text;
-  const buf = Buffer.from(text.slice(PREFIX.length), 'base64');
-  const d = crypto.createDecipheriv('aes-256-gcm', key(), buf.subarray(0, 12));
-  d.setAuthTag(buf.subarray(12, 28));
-  return Buffer.concat([d.update(buf.subarray(28)), d.final()]).toString('utf8');
+  try {
+    const buf = Buffer.from(text.slice(PREFIX.length), 'base64');
+    const d = crypto.createDecipheriv('aes-256-gcm', key(), buf.subarray(0, 12));
+    d.setAuthTag(buf.subarray(12, 28));
+    return Buffer.concat([d.update(buf.subarray(28)), d.final()]).toString('utf8');
+  } catch {
+    return null;
+  }
 }
