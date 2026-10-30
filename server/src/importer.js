@@ -29,7 +29,8 @@ export async function insertPlays(userId, plays, source) {
     return docs.length;
   } catch (err) {
     const errors = [].concat(err.writeErrors ?? []);
-    if (!errors.length || errors.some((e) => e.code !== 11000)) throw err;
+    // Mongoose wraps each write error as { err, index }, so the code lives on e.err.
+    if (!errors.length || errors.some((e) => (e.err ?? e).code !== 11000)) throw err;
     return err.insertedDocs?.length ?? 0;
   }
 }
