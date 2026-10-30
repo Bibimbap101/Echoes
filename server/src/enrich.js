@@ -70,6 +70,19 @@ async function enrichNext(user) {
   return true;
 }
 
+// Fills in as many covers/photos as fit in `ms` (used by /api/cron, where nothing runs forever). Returns how many.
+export async function enrichFor(ms) {
+  const stop = Date.now() + ms;
+  let done = 0;
+  while (Date.now() < stop) {
+    const user = await User.findOne();
+    if (!user || !(await enrichNext(user))) break;
+    done++;
+    await sleep(PAUSE_MS);
+  }
+  return done;
+}
+
 // Runs forever in the background, filling in covers, artist photos and genres.
 export async function startEnricher() {
   for (;;) {
