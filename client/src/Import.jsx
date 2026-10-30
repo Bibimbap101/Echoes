@@ -59,7 +59,6 @@ export default function Import({ me, onLogout }) {
           {me.imageUrl && <img src={me.imageUrl} alt="" />}
           <div><b>{me.displayName}</b><p className="sub">Connected to Spotify</p></div>
         </div>
-        <a className="sub" href="#/privacy">Privacy</a>
         <button className="button ghost" onClick={onLogout}>Log out</button>
       </section>
 
@@ -82,6 +81,8 @@ export default function Import({ me, onLogout }) {
           </ul>
         )}
       </section>
+
+      <a className="sub" href="#/privacy">What Echoes saves about you</a>
     </div>
   );
 }

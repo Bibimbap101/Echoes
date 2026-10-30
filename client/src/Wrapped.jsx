@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { toPng } from 'html-to-image';
-import { get, fmt } from './api.js';
+import { get, fmt, plural } from './api.js';
 import { useCoverColor } from './coverColor.js';
 import { Art, Liked } from './ui.jsx';
 
@@ -48,7 +48,7 @@ function buildCards(w, colors, title) {
         <p className="k">Your top artist</p>
         <Art src={a.image} round className="story-art" />
         <p className="big name">{a.name}</p>
-        <p className="k">{fmt(a.streams)} streams · {fmt(Math.round(a.minutes / 60))} hours</p>
+        <p className="k">{plural(a.streams, 'stream')} · {a.minutes >= 60 ? plural(Math.round(a.minutes / 60), 'hour') : plural(a.minutes, 'minute')}</p>
       </Card>,
     );
   }
@@ -84,7 +84,7 @@ function buildCards(w, colors, title) {
         <p className="k">Your obsession</p>
         <Art src={o.image} className="story-art square" />
         <p className="big name">{o.name}</p>
-        <p className="k">The week of {dayName(o.weekOf)}, you played it <b className="accent">{o.streams} times</b>.</p>
+        <p className="k">The week of {dayName(o.weekOf)}, you played it <b className="accent">{plural(o.streams, 'time')}</b>.</p>
       </Card>,
     );
   }

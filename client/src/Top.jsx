@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useApi, fmt } from './api.js';
+import { useApi, fmt, plural } from './api.js';
 import { useCoverColor } from './coverColor.js';
 import { Art, Change, RankedRows, RangePicker, useRange } from './ui.jsx';
 
@@ -63,7 +63,7 @@ export default function Top() {
               </p>
               <p className="hero-meta">
                 {first.artist && <>{first.artist} · </>}
-                {!fromSpotify && <><b>{fmt(first.streams)} streams</b> · {fmt(first.minutes)} min </>}
+                {!fromSpotify && <><b>{plural(first.streams, 'stream')}</b> · {fmt(first.minutes)} min </>}
                 <Change rank={1} prevRank={first.prevRank} />
               </p>
             </div>

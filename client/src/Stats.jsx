@@ -1,10 +1,22 @@
-import { useState } from 'react';
-import { useApi, fmt, pctChange, get } from './api.js';
+import { useEffect, useRef, useState } from 'react';
+import { useApi, fmt, pctChange, get, plural } from './api.js';
 import { Art, Liked, Pct, RangePicker, useRange } from './ui.jsx';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const hourLabel = (h) => (h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`);
 const longDate = (s) => new Date(`${s}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+
+// The element's real width, so chart text is drawn at true size instead of shrinking on phones.
+function useWidth(fallback = 640) {
+  const ref = useRef(null);
+  const [width, setWidth] = useState(fallback);
+  useEffect(() => {
+    const ro = new ResizeObserver(([e]) => setWidth(Math.round(e.contentRect.width) || fallback));
+    ro.observe(ref.current);
+    return () => ro.disconnect();
+  }, [fallback]);
+  return [ref, width];
+}
 
 function Tile({ label, value, before }) {
   return (
@@ -72,7 +84,8 @@ function MinutesChart({ query }) {
   const [hover, setHover] = useState(null);
   const { data } = useApi(query && `/api/stats/timeline?${query}&unit=${unit}`);
   const pts = fillGaps(data ?? [], unit);
-  const W = 640, H = 200, L = 40, B = 22;
+  const [box, W] = useWidth();
+  const H = 200, L = 40, B = 22;
   const max = Math.max(60, ...pts.map((p) => p.minutes));
   const x = (i) => L + (pts.length > 1 ? (i * (W - L - 8)) / (pts.length - 1) : (W - L) / 2);
   const y = (v) => H - B - (v / max) * (H - B - 12);
@@ -86,7 +99,7 @@ function MinutesChart({ query }) {
 
   const h = hover != null ? pts[hover] : null;
   return (
-    <section className="box">
+    <section className="box" ref={box}>
       <div className="box-head">
         <h2>Minutes over time</h2>
         <div className="pills small" role="group" aria-label="Group by">
@@ -108,7 +121,8 @@ function MinutesChart({ query }) {
             ))}
             <polyline fill="none" stroke="#1ed760" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" points={pts.map((p, i) => `${x(i)},${y(p.minutes)}`).join(' ')} />
             <text x={L} y={H - 4} fill="#b3b3b3" fontSize="11">{longDate(pts[0].date)}</text>
-            <text x={W} y={H - 4} fill="#b3b3b3" fontSize="11" textAnchor="end">{longDate(pts.at(-1).date)}</text>
+            {pts.length > 1 && <text x={W} y={H - 4} fill="#b3b3b3" fontSize="11" textAnchor="end">{longDate(pts.at(-1).date)}</text>}
+            {pts.length === 1 && <circle cx={x(0)} cy={y(pts[0].minutes)} r="5" fill="#1ed760" />} {/* a lone point has no line to draw */}
             {h && (
               <>
                 <line x1={x(hover)} x2={x(hover)} y1={8} y2={H - B} stroke="#fff" strokeOpacity="0.35" />
@@ -169,13 +183,14 @@ function Skips({ query }) {
 function LikedChart({ months }) {
   const [hover, setHover] = useState(null);
   const pts = fillGaps(months.map((m) => ({ date: `${m.month}-01`, minutes: m.songs })), 'month').slice(-24);
-  const W = 640, H = 160, B = 22, gap = 2;
+  const [box, W] = useWidth();
+  const H = 160, B = 22, gap = 2;
   const max = Math.max(1, ...pts.map((p) => p.minutes));
   const bw = W / pts.length;
   const monthLabel = (d) => new Date(`${d}T00:00:00`).toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
   const h = hover != null ? pts[hover] : null;
   return (
-    <div className="chart">
+    <div className="chart" ref={box}>
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Songs liked per month" onMouseLeave={() => setHover(null)}>
         <line x1={0} x2={W} y1={H - B} y2={H - B} stroke="#2a2a2a" />
         {pts.map((p, i) => {
@@ -232,7 +247,7 @@ function Library({ r }) {
             <a className="skip-row" href={m.spotifyUrl} target="_blank" rel="noreferrer">
               <Art src={m.image} />
               <span className="title"><b><Liked />{m.name}</b><span className="sub">{m.artist}</span></span>
-              <span className="sub">{fmt(m.streams)} streams</span>
+              <span className="sub">{plural(m.streams, 'stream')}</span>
             </a>
           ) : <p className="sub">None of your liked songs were played in this range.</p>}
           <h2>Top artists you don't follow yet</h2>
@@ -242,7 +257,7 @@ function Library({ r }) {
                 <a key={a.id} className="skip-row" href={a.spotifyUrl ?? undefined} target="_blank" rel="noreferrer">
                   <Art src={a.image} round />
                   <span className="title"><b>{a.name}</b></span>
-                  <span className="sub">{fmt(a.streams)} streams</span>
+                  <span className="sub">{plural(a.streams, 'stream')}</span>
                 </a>
               ))}
             </div>

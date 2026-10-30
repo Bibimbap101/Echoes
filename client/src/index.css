@@ -145,7 +145,7 @@ h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.025em; }
 
 /* Stats */
 .stat-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
-.tile-stat { background: var(--raised); border-radius: 10px; padding: 16px; display: grid; gap: 2px; }
+.tile-stat { background: var(--raised); border-radius: 10px; padding: 16px; display: grid; gap: 2px; align-content: start; }
 .tile-stat b { font-size: 1.9rem; font-weight: 900; letter-spacing: -0.035em; font-variant-numeric: tabular-nums; }
 .box { background: var(--raised); border-radius: 10px; padding: 20px; display: grid; gap: 10px; align-content: start; min-width: 0; }
 .box h2 { font-size: 1.15rem; }
@@ -183,10 +183,12 @@ h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.025em; }
 .wrapped-start { display: grid; gap: 20px; justify-items: start; padding: 32px; border-radius: 12px; background: var(--raised); max-width: 560px; }
 .wrapped-start .logo { padding: 0; font-size: 1.1rem; }
 .story { display: grid; gap: 14px; justify-items: center; }
-.story-bars { display: flex; gap: 4px; width: min(360px, 100%); }
+/* The story always fits the screen height, so Back/Next/Save never need a scroll. */
+.story { --story-w: min(360px, 100%, calc((100dvh - 250px) * 9 / 16)); }
+.story-bars { display: flex; gap: 4px; width: var(--story-w); }
 .story-bars i { flex: 1; height: 3px; border-radius: 3px; background: rgb(255 255 255 / 0.25); transition: background-color 0.2s; }
 .story-bars i.on { background: var(--text); }
-.story-stage { container-type: inline-size; width: min(360px, 100%); touch-action: pan-y; user-select: none; cursor: pointer; overflow: hidden; border-radius: 16px; }
+.story-stage { container-type: inline-size; width: var(--story-w); touch-action: pan-y; user-select: none; cursor: pointer; overflow: hidden; border-radius: 16px; }
 .story-slide { animation: slide-in 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .story-slide.from-left { animation-name: slide-in-left; }
 @keyframes slide-in { from { opacity: 0; transform: translateX(24px); } }
@@ -197,7 +199,7 @@ h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.025em; }
 /* The card scales with the stage's width (cqw can't measure the box it's on), so the saved image matches what you see. */
 .story-card {
   position: relative; aspect-ratio: 9 / 16; border-radius: 16px; overflow: hidden;
-  display: flex; flex-direction: column; padding: 8cqw 7cqw 12cqw; color: var(--text); font-size: 4.2cqw; font-family: Figtree, system-ui, sans-serif;
+  display: flex; flex-direction: column; padding: 8cqw 7cqw 14cqw; color: var(--text); font-size: 4.2cqw; font-family: Figtree, system-ui, sans-serif;
 }
 .story-card.on-light { color: var(--black); }
 .story-card .k { font-weight: 700; font-size: 1em; line-height: 1.35; opacity: 0.9; }
@@ -229,6 +231,13 @@ h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.025em; }
 
 @keyframes fade { from { opacity: 0; } }
 
+/* Art placeholders are always visible, and round art stays round inside any list (beats `.row img` etc.) */
+.ph { background: var(--pill); }
+:is(img, .ph).round { border-radius: 50%; }
+
+/* The story is full focus: no now-playing bar over its buttons */
+.shell:has(.story) .np { display: none; }
+
 /* Liked check */
 .liked { color: var(--acc); vertical-align: -2px; margin-right: 6px; flex: none; }
 
@@ -254,7 +263,7 @@ h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.025em; }
     position: fixed; inset: auto 0 0 0; z-index: 10; flex-direction: row; justify-content: space-around; padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
     border-radius: 0; background: rgb(18 18 18 / 0.85); backdrop-filter: blur(20px) saturate(160%);
   }
-  .logo, .me { display: none; }
+  .side .logo, .me { display: none; }
   .nav { font-size: 0.8rem; padding: 8px 10px; }
   .nav[aria-current='page'] { background: none; color: var(--acc); }
   .hero, .hero.art-left { grid-template-columns: 1fr; padding: 22px; }
@@ -263,6 +272,8 @@ h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.025em; }
   .row .mins, .row .open { display: none; }
   .row img, .row .ph { width: 44px; height: 44px; }
   .controls { top: -20px; }
+  .controls .pills { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -16px; padding: 0 16px; } /* swipe, don't wrap */
+  .controls .pills::-webkit-scrollbar { display: none; }
   .main { padding-bottom: 168px; } /* room for the now playing bar + tab bar */
   .np {
     position: fixed; z-index: 10; left: 8px; right: 8px; bottom: calc(60px + env(safe-area-inset-bottom));

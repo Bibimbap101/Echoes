@@ -1,4 +1,4 @@
-import { useApi, fmt, pctChange } from './api.js';
+import { useApi, fmt, pctChange, plural } from './api.js';
 import { useCoverColor } from './coverColor.js';
 import { Art, Pct, RowLink, OpenIcon, RankedRows } from './ui.jsx';
 
@@ -23,6 +23,7 @@ export default function Home({ me }) {
 
   const w = week.data;
   const topArtist = artists.data?.items[0];
+  const change = w?.previous ? pctChange(w.minutes, w.previous.minutes) : null; // null = nothing to compare with
   const heroColor = useCoverColor(topArtist?.image);
 
   return (
@@ -34,8 +35,9 @@ export default function Home({ me }) {
           <p className="hero-label">In the last 7 days you listened for</p>
           <p className="hero-big">{fmt(w?.minutes)}<small>min</small></p>
           <p className="hero-meta">
-            {topArtist && <>Mostly <b>{topArtist.name}</b> · </>}
-            {w?.previous && <><Pct value={pctChange(w.minutes, w.previous.minutes)} /> vs the 7 days before</>}
+            {topArtist && <>Mostly <b>{topArtist.name}</b></>}
+            {topArtist && change != null && ' · '}
+            {change != null && <><Pct value={change} /> vs the 7 days before</>}
           </p>
         </div>
         {topArtist && <Art src={topArtist.image} round className="hero-art" />}
@@ -55,7 +57,7 @@ export default function Home({ me }) {
               <RowLink key={a.id} href={a.spotifyUrl} className="tile">
                 <Art src={a.image} round />
                 <p>{a.name}</p>
-                <span className="sub">{fmt(a.streams)} streams</span>
+                <span className="sub">{plural(a.streams, 'stream')}</span>
               </RowLink>
             ))}
           </div>

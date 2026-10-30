@@ -26,6 +26,7 @@ export function useApi(path) {
 }
 
 export const fmt = (n) => (n == null ? '—' : n.toLocaleString());
+export const plural = (n, word) => `${fmt(n)} ${word}${n === 1 ? '' : 's'}`;
 
 // % change vs previous period; null when there's nothing to compare against.
 export const pctChange = (now, before) => (before ? Math.round(((now - before) / before) * 100) : null);
