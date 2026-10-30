@@ -5,7 +5,8 @@
     "setup": "npm install && npm install --prefix server && npm install --prefix client",
     "dev": "concurrently -n server,client -c yellow,cyan \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
     "test": "npm test --prefix server",
-    "import": "npm run import --prefix server --"
+    "import": "npm run import --prefix server --",
+    "copy-db": "npm run copy-db --prefix server --"
   },
   "devDependencies": {
     "concurrently": "^9.2.0"

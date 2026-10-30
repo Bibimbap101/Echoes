@@ -6,7 +6,8 @@
     "dev": "node --watch --env-file=../.env src/index.js",
     "start": "node --env-file=../.env src/index.js",
     "test": "node --test",
-    "import": "node --env-file=../.env scripts/import.js"
+    "import": "node --env-file=../.env scripts/import.js",
+    "copy-db": "node --env-file=../.env scripts/copy-db.js"
   },
   "dependencies": {
     "cookie-parser": "^1.4.7",

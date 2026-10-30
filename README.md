@@ -67,6 +67,24 @@ Meanwhile, Echoes saves your plays by itself every 30 minutes, starting the mome
 3. Re-importing the same files is safe. Repeats are skipped.
 4. Covers and artist photos fill in slowly in the background (about 1 lookup per second) while the server runs. Your most-played songs go first. The app shows the progress.
 
+## 7. Put it online (Vercel + MongoDB Atlas, free)
+
+On your laptop the server runs nonstop. On Vercel nothing runs between visits, so an outside timer calls `/api/cron` every 30 minutes to save new plays, sync Liked Songs and fill in covers.
+
+1. **Database:** make a free M0 cluster at [mongodb.com/atlas](https://www.mongodb.com/atlas). Add a database user, allow access from anywhere (`0.0.0.0/0`, Vercel has no fixed IP), and copy the `mongodb+srv://...` connection string. Add `/echoes` before the `?` so the data lands in a database called echoes.
+2. **Copy your data (optional):** `npm run copy-db -- "mongodb+srv://..."`. Safe to run twice.
+3. **Vercel:** import the GitHub repo at [vercel.com/new](https://vercel.com/new). Leave the build settings alone (`vercel.json` sets them). Under Environment Variables add:
+   - `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`
+   - `SPOTIFY_REDIRECT_URI` = `https://<your-name>.vercel.app/api/auth/callback`
+   - `SESSION_SECRET` (same as your `.env` if you copied data; otherwise just log in again)
+   - `MONGODB_URI` = the Atlas string
+   - `CRON_SECRET` = a new long random string
+   - `TIMEZONE`, `STREAM_MIN_MS` (optional)
+4. **Spotify dashboard:** add `https://<your-name>.vercel.app/api/auth/callback` as a Redirect URI (keep the 127.0.0.1 one for local use).
+5. **Timer:** at [cron-job.org](https://cron-job.org) make a job for `https://<your-name>.vercel.app/api/cron`, every 30 minutes, with the header `Authorization: Bearer <CRON_SECRET>`. Its response shows new plays and covers filled.
+
+Spotify Development Mode allows 5 users, each added by email under User Management.
+
 ## Stats API
 
 All under `/api/stats`, and all need you to be logged in. `range` is `today`, `7d`, `4w`, `6m`, `1y`, `life` or `custom` (with `from=YYYY-MM-DD&to=YYYY-MM-DD`). Add `private=hide` to leave out private sessions.
