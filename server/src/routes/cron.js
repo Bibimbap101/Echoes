@@ -5,7 +5,7 @@ import { syncLibrary } from '../library.js';
 import { enrichFor } from '../enrich.js';
 
 const LIBRARY_EVERY_MS = 6 * 3600_000;
-const ENRICH_MS = 40_000; // stays under the function's 60s limit
+const ENRICH_MS = 15_000; // cron-job.org gives up after 30s, so answer well before that
 
 export const cronRouter = Router();
 
