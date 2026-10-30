@@ -138,7 +138,11 @@ function buildCards(w, colors, title) {
         <div><span className="dim">Top artists</span>{w.topArtists.slice(0, 3).map((x) => <b key={x.id}>{x.name}</b>)}</div>
         <div><span className="dim">Top songs</span>{w.topTracks.slice(0, 3).map((x) => <b key={x.id}>{x.name}</b>)}</div>
         <div><span className="dim">Minutes</span><b className="stat">{fmt(w.minutes)}</b></div>
-        <div><span className="dim">Top genre</span><b className="stat">{w.topGenres[0]?.name ?? '—'}</b></div>
+        {w.topGenres.length ? (
+          <div><span className="dim">Top genre</span><b className="stat">{w.topGenres[0].name}</b></div>
+        ) : (
+          <div><span className="dim">Different songs</span><b className="stat">{fmt(w.uniqueTracks)}</b></div>
+        )}
       </div>
     </Card>,
   );
