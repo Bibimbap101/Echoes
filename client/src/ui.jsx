@@ -130,3 +130,34 @@ export function SoundToggle() {
     </button>
   );
 }
+
+// Loading placeholders shaped like the real content (shimmer is in index.css).
+export function Skel({ w = '100%', h = '1em', round, style }) {
+  return <span className={`skel${round ? ' round' : ''}`} style={{ width: w, height: h, ...style }} aria-hidden="true" />;
+}
+
+export function SkelRows({ n = 5 }) {
+  return (
+    <div className="rows" aria-busy="true">
+      {Array.from({ length: n }, (_, i) => (
+        <div key={i} className="row simple">
+          <Skel w={48} h={48} />
+          <span className="title"><Skel w="45%" /><Skel w="25%" h="0.8em" style={{ marginTop: 6 }} /></span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function SkelTiles({ n = 6, round }) {
+  return (
+    <div className="tiles one-row" aria-busy="true">
+      {Array.from({ length: n }, (_, i) => (
+        <div key={i} className="tile">
+          <Skel h="auto" round={round} style={{ aspectRatio: 1 }} />
+          <Skel w="70%" style={{ marginTop: 10 }} />
+        </div>
+      ))}
+    </div>
+  );
+}

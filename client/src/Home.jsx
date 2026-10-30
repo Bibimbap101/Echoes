@@ -1,6 +1,6 @@
 import { useApi, fmt, pctChange, plural } from './api.js';
-import { useCoverColor } from './coverColor.js';
-import { Art, Pct, RowLink, OpenIcon, RankedRows } from './ui.jsx';
+import { useAmbient } from './coverColor.js';
+import { Art, Pct, RowLink, OpenIcon, RankedRows, Skel, SkelRows, SkelTiles } from './ui.jsx';
 
 function greeting() {
   const h = new Date().getHours();
@@ -24,7 +24,7 @@ export default function Home({ me }) {
   const w = week.data;
   const topArtist = artists.data?.items[0];
   const change = w?.previous ? pctChange(w.minutes, w.previous.minutes) : null; // null = nothing to compare with
-  const heroColor = useCoverColor(topArtist?.image);
+  const heroColor = useAmbient(topArtist?.image);
 
   return (
     <div className="page">
@@ -33,7 +33,7 @@ export default function Home({ me }) {
       <section className="hero" style={{ '--hero': heroColor ?? undefined }} aria-label="Last 7 days">
         <div>
           <p className="hero-label">In the last 7 days you listened for</p>
-          <p className="hero-big">{fmt(w?.minutes)}<small>min</small></p>
+          <p className="hero-big">{w ? fmt(w.minutes) : <Skel w="2.6ch" h="0.8em" />}<small>min</small></p>
           <p className="hero-meta">
             {topArtist && <>Mostly <b>{topArtist.name}</b></>}
             {topArtist && change != null && ' · '}
@@ -49,6 +49,7 @@ export default function Home({ me }) {
         <span className="pill stat-pill"><b>{fmt(w?.hours)}</b> hrs {w?.previous && <Pct value={pctChange(w.hours, w.previous.hours)} />}</span>
       </div>
 
+      {!artists.data && <section><div className="shelf-head"><h2>Your top artists this week</h2></div><SkelTiles round /></section>}
       {artists.data?.items.length > 0 && (
         <section>
           <div className="shelf-head"><h2>Your top artists this week</h2><a href="#/top">Show all</a></div>
@@ -65,6 +66,7 @@ export default function Home({ me }) {
       )}
 
       <div className="pair">
+      {!tracks.data && <section><div className="shelf-head"><h2>Top tracks this week</h2></div><SkelRows /></section>}
       {tracks.data?.items.length > 0 && (
         <section>
           <div className="shelf-head"><h2>Top tracks this week</h2><a href="#/top">Show all</a></div>
@@ -72,6 +74,7 @@ export default function Home({ me }) {
         </section>
       )}
 
+      {!recent.data && <section><div className="shelf-head"><h2>Recently played</h2></div><SkelRows /></section>}
       {recent.data?.length > 0 && (
         <section>
           <div className="shelf-head"><h2>Recently played</h2></div>

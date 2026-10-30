@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useApi, fmt, pctChange, get, plural } from './api.js';
-import { Art, Liked, Pct, RangePicker, useRange } from './ui.jsx';
+import { Art, Liked, Pct, RangePicker, useRange, Skel } from './ui.jsx';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const hourLabel = (h) => (h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`);
@@ -22,7 +22,7 @@ function Tile({ label, value, before }) {
   return (
     <div className="tile-stat">
       <span className="sub">{label}</span>
-      <b>{fmt(value)}</b>
+      <b>{value == null ? <Skel w="2.5ch" h="0.85em" /> : fmt(value)}</b>
       {before != null && <span className="sub"><Pct value={pctChange(value, before)} /></span>}
     </div>
   );
@@ -108,7 +108,9 @@ function MinutesChart({ query }) {
           ))}
         </div>
       </div>
-      {pts.length === 0 ? (
+      {!data ? (
+        <Skel h={200} />
+      ) : pts.length === 0 ? (
         <p className="sub">No plays in this range yet.</p>
       ) : (
         <div className="chart">
@@ -147,8 +149,12 @@ function Streaks({ query }) {
   return (
     <section className="box">
       <h2>Streaks</h2>
-      <p className="big-num">{fmt(l?.days ?? 0)}<small>{l?.days === 1 ? 'day' : 'days'}</small></p>
-      <p className="sub">{l?.start ? `Longest · ${longDate(l.start)} – ${longDate(l.end)}` : 'No streak in this range yet'}</p>
+      {!data ? <><Skel w="3ch" h="3rem" /><Skel w="60%" /></> : (
+        <>
+          <p className="big-num">{fmt(l?.days ?? 0)}<small>{l?.days === 1 ? 'day' : 'days'}</small></p>
+          <p className="sub">{l?.start ? `Longest · ${longDate(l.start)} – ${longDate(l.end)}` : 'No streak in this range yet'}</p>
+        </>
+      )}
       {data?.current > 0 && <p className="streak-now"><span className="up">{data.current} {data.current === 1 ? 'day' : 'days'}</span> and counting</p>}
     </section>
   );
@@ -159,7 +165,7 @@ function Skips({ query }) {
   return (
     <section className="box">
       <div className="box-head"><h2>Skips</h2><span className="sub">imported plays only</span></div>
-      {data?.skipRate == null ? (
+      {!data ? <Skel w="70%" /> : data.skipRate == null ? (
         <p className="sub">Skips come from your imported history. Import it on the Your data page.</p>
       ) : (
         <>
@@ -328,7 +334,7 @@ export default function Stats() {
       </div>
 
       <div className="pair">
-        {clock && <ListeningClock cells={clock} />}
+        {clock ? <ListeningClock cells={clock} /> : <Skel h={300} style={{ borderRadius: 10 }} />}
         <MinutesChart query={r.query} />
       </div>
       <div className="two-up">

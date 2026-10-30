@@ -9,15 +9,32 @@ export async function get(path) {
   return res.json();
 }
 
-// Fetches `path` (skips when null). Keeps the old data while new data loads, so lists don't flash.
+// Answers already fetched this tab session: pages paint instantly from these, then refresh quietly.
+const cache = new Map();
+function cached(path) {
+  if (!cache.has(path)) {
+    try { const v = JSON.parse(sessionStorage.getItem(`api:${path}`)); if (v) cache.set(path, v); } catch {}
+  }
+  return cache.get(path) ?? null;
+}
+function remember(path, data) {
+  cache.set(path, data);
+  try { sessionStorage.setItem(`api:${path}`, JSON.stringify(data)); } catch {} // full or blocked: memory still works
+}
+export function forgetCache() {
+  cache.clear();
+  try { sessionStorage.clear(); } catch {}
+}
+
+// Fetches `path` (skips when null). Shows the cached answer (or the old data) while fresh data loads, so nothing flashes.
 export function useApi(path) {
-  const [state, setState] = useState({ data: null, error: null, loading: Boolean(path) });
+  const [state, setState] = useState(() => ({ data: path && cached(path), error: null, loading: Boolean(path) }));
   useEffect(() => {
     if (!path) return;
     let live = true;
-    setState((s) => ({ ...s, loading: true }));
+    setState((s) => ({ data: cached(path) ?? s.data, error: null, loading: true }));
     get(path).then(
-      (data) => live && setState({ data, error: null, loading: false }),
+      (data) => { remember(path, data); if (live) setState({ data, error: null, loading: false }); },
       (error) => live && setState((s) => ({ ...s, error, loading: false })),
     );
     return () => { live = false; };

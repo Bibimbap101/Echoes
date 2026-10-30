@@ -42,3 +42,18 @@ export function useCoverColor(src) {
   }, [src]);
   return color;
 }
+
+// The page's glow behind the content: the page's own art wins, else what's playing now. CSS fades between colors.
+const ambient = { page: null, playing: null };
+function paint(slot, color) {
+  ambient[slot] = color;
+  document.documentElement.style.setProperty('--ambient', ambient.page ?? ambient.playing ?? 'var(--bg)');
+}
+export function useAmbient(src, slot = 'page') {
+  const color = useCoverColor(src);
+  useEffect(() => {
+    paint(slot, color);
+    return () => paint(slot, null);
+  }, [color, slot]);
+  return color;
+}

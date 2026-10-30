@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useApi, fmt, plural } from './api.js';
-import { useCoverColor } from './coverColor.js';
-import { Art, Change, RankedRows, RangePicker, useRange } from './ui.jsx';
+import { useAmbient } from './coverColor.js';
+import { Art, Change, RankedRows, RangePicker, useRange, Skel, SkelRows } from './ui.jsx';
 
 const TYPES = [
   ['tracks', 'Tracks', 'track'],
@@ -19,7 +19,7 @@ export default function Top() {
   const [first, ...rest] = items;
   const fromSpotify = data?.source === 'spotify';
   const round = type === 'artists' || type === 'genres';
-  const heroColor = useCoverColor(first?.image);
+  const heroColor = useAmbient(first?.image);
   const rangeLabel = r.label;
   const typeLabel = TYPES.find((t) => t[0] === type)[2];
 
@@ -43,6 +43,8 @@ export default function Top() {
           <span><b>Spotify's ranking.</b> Echoes doesn't have enough of your history for the {rangeLabel} yet, so this shows Spotify's own order without stream counts. Import your history to see real numbers.</span>
         </p>
       )}
+
+      {!data && !error && <div style={{ display: 'grid', gap: 24 }}><Skel h={176} style={{ borderRadius: 12 }} /><SkelRows n={8} /></div>}
 
       {data && !first && (
         <div className="empty">

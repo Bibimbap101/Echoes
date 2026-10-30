@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { get } from './api.js';
 import { Art, Liked } from './ui.jsx';
+import { useAmbient } from './coverColor.js';
 
 const POLL_MS = 10_000;
 const time = (ms) => `${Math.floor(ms / 60_000)}:${String(Math.floor((ms / 1000) % 60)).padStart(2, '0')}`;
@@ -32,6 +33,7 @@ export default function NowPlaying() {
     return () => clearInterval(id);
   }, [np]);
 
+  useAmbient(np?.isPlaying ? np.image : null, 'playing'); // tints pages that have no art of their own
   if (!np) return null;
   const progress = Math.min(np.progressMs + (np.isPlaying ? Date.now() - at : 0), np.durationMs);
 
