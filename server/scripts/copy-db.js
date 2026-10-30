@@ -1,6 +1,10 @@
 // Copies everything from your local database to another one (e.g. MongoDB Atlas).
 // Usage: npm run copy-db -- "mongodb+srv://..."   (rows that already exist there are skipped)
+import dns from 'node:dns';
 import mongoose from 'mongoose';
+
+// Some Windows setups hand Node a DNS server (127.0.0.1) that refuses the SRV lookup mongodb+srv needs.
+dns.setServers(['1.1.1.1', '8.8.8.8']);
 
 const target = process.argv[2];
 if (!target?.startsWith('mongodb')) throw new Error('Pass the target connection string: npm run copy-db -- "mongodb+srv://..."');
