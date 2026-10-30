@@ -22,6 +22,10 @@ h1, h2, p { margin: 0; }
 .sub { color: var(--sub); font-size: 0.875rem; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 
+/* Privacy page */
+.privacy { max-width: 680px; line-height: 1.6; }
+.privacy ul { margin: 0; padding-left: 1.2em; color: var(--sub); }
+
 /* Shell: black frame, sidebar + rounded main panel (Spotify's layout) */
 .shell { display: grid; grid-template-columns: 232px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 8px; padding: 8px; height: 100vh; }
 .side { display: flex; flex-direction: column; gap: 2px; padding: 20px 12px; background: var(--bg); border-radius: 8px; }

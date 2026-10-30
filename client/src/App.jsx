@@ -5,6 +5,7 @@ import Import from './Import.jsx';
 import Stats from './Stats.jsx';
 import Wrapped from './Wrapped.jsx';
 import NowPlaying from './NowPlaying.jsx';
+import Privacy from './Privacy.jsx';
 
 const PAGES = [
   ['home', 'Home'],
@@ -37,6 +38,10 @@ export default function App() {
 
   if (me === undefined) return <main className="center" aria-busy="true" />;
 
+  if (!me && page === 'privacy') {
+    return <main className="main"><Privacy /><p><a className="sub" href="#/">← Back</a></p></main>;
+  }
+
   if (!me) {
     return (
       <main className="center">
@@ -44,6 +49,7 @@ export default function App() {
         <p className="sub">Your listening, all year round.</p>
         {error && <p className="error">Login didn't work ({error}). Try again.</p>}
         <a className="button" href="/api/auth/login">Log in with Spotify</a>
+        <a className="sub" href="#/privacy">Privacy</a>
       </main>
     );
   }
@@ -66,6 +72,7 @@ export default function App() {
         {page === 'import' && <Import me={me} onLogout={logout} />}
         {page === 'stats' && <Stats />}
         {page === 'wrapped' && <Wrapped />}
+        {page === 'privacy' && <Privacy />}
       </main>
       <NowPlaying />
     </div>

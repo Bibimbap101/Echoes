@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 
+const PIECE = 5000; // rows per request, ~2 MB
+
 export default function Import({ me, onLogout }) {
   const [status, setStatus] = useState(null);
   const [log, setLog] = useState([]);
@@ -20,13 +22,22 @@ export default function Import({ me, onLogout }) {
       setLog((l) => [...l, `${file.name}: importing…`]);
       let line;
       try {
-        const res = await fetch('/api/import', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: await file.text(),
-        });
-        const body = await res.json();
-        line = res.ok ? `${file.name}: ${body.added} new plays (${body.plays - body.added} already saved)` : `${file.name}: ${body.error}`;
+        const rows = JSON.parse(await file.text());
+        if (!Array.isArray(rows)) throw new Error('not a Streaming_History_Audio file');
+        // Sent in pieces: hosted servers (Vercel) refuse request bodies over ~4.5 MB.
+        let plays = 0, added = 0;
+        for (let i = 0; i < rows.length; i += PIECE) {
+          const res = await fetch('/api/import', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(rows.slice(i, i + PIECE)),
+          });
+          const body = await res.json();
+          if (!res.ok) throw new Error(body.error);
+          plays += body.plays;
+          added += body.added;
+        }
+        line = `${file.name}: ${added} new plays (${plays - added} already saved)`;
       } catch (err) {
         line = `${file.name}: failed (${err.message})`;
       }
@@ -48,6 +59,7 @@ export default function Import({ me, onLogout }) {
           {me.imageUrl && <img src={me.imageUrl} alt="" />}
           <div><b>{me.displayName}</b><p className="sub">Connected to Spotify</p></div>
         </div>
+        <a className="sub" href="#/privacy">Privacy</a>
         <button className="button ghost" onClick={onLogout}>Log out</button>
       </section>
 

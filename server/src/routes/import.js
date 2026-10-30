@@ -7,7 +7,7 @@ import { Artist } from '../models/Artist.js';
 
 export const importRouter = Router();
 
-// One Streaming_History_Audio_*.json file per request (they're ~10-15 MB each).
+// A list of Streaming_History_Audio rows (the page sends each file in pieces of 5,000).
 importRouter.post('/', requireUser, express.json({ limit: '100mb' }), async (req, res) => {
   if (!Array.isArray(req.body)) {
     return res.status(400).json({ error: 'Not a Streaming_History_Audio file (expected a JSON list).' });
