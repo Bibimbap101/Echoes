@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { fmt } from './api.js';
+import { soundOn, setSound, play } from './sound.js';
 
 const RANGES = [
   ['4w', '4 Weeks', 'last 4 weeks'],
@@ -109,5 +110,23 @@ export function RankedRows({ items, round, showCounts = true }) {
         </RowLink>
       ))}
     </div>
+  );
+}
+
+export function SoundToggle() {
+  const [on, setOn] = useState(soundOn);
+  function toggle() {
+    setSound(!on);
+    setOn(!on);
+    if (!on) play('ok'); // a preview of what you just turned on
+  }
+  return (
+    <button className="sound" aria-pressed={on} onClick={toggle} title={on ? 'Turn click sounds off' : 'Turn click sounds on'}>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M11 5 6 9H2v6h4l5 4z" />
+        {on ? <path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14" /> : <path d="m22 9-6 6m0-6 6 6" />}
+      </svg>
+      <span className="sr-only">Click sounds</span>
+    </button>
   );
 }

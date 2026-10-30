@@ -6,6 +6,7 @@ import Stats from './Stats.jsx';
 import Wrapped from './Wrapped.jsx';
 import NowPlaying from './NowPlaying.jsx';
 import Privacy from './Privacy.jsx';
+import { SoundToggle } from './ui.jsx';
 
 const PAGES = [
   ['home', 'Home'],
@@ -45,7 +46,7 @@ export default function App() {
   if (!me) {
     return (
       <main className="center">
-        <p className="logo">Echoes</p>
+        <p className="logo"><img src="/icon.svg" alt="" />Echoes</p>
         <p className="sub">Your listening, all year round.</p>
         {error && <p className="error">Login didn't work ({error}). Try again.</p>}
         <a className="button" href="/api/auth/login">Log in with Spotify</a>
@@ -57,13 +58,14 @@ export default function App() {
   return (
     <div className="shell">
       <nav className="side" aria-label="Main">
-        <p className="logo">Echoes</p>
+        <p className="logo"><img src="/icon.svg" alt="" />Echoes</p>
         {PAGES.map(([id, label]) => (
           <a key={id} className="nav" href={`#/${id}`} aria-current={page === id ? 'page' : undefined}>{label}</a>
         ))}
         <div className="me">
           {me.imageUrl && <img src={me.imageUrl} alt="" />}
           <span>{me.displayName}</span>
+          <SoundToggle />
         </div>
       </nav>
       <main className="main">

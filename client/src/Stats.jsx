@@ -327,8 +327,10 @@ export default function Stats() {
         <Tile label="Albums" value={s?.uniqueAlbums} before={p?.uniqueAlbums} />
       </div>
 
-      {clock && <ListeningClock cells={clock} />}
-      <MinutesChart query={r.query} />
+      <div className="pair">
+        {clock && <ListeningClock cells={clock} />}
+        <MinutesChart query={r.query} />
+      </div>
       <div className="two-up">
         <Streaks query={r.query} />
         <Skips query={r.query} />

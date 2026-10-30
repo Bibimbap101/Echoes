@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { SoundToggle } from './ui.jsx';
+import { play } from './sound.js';
 
 const PIECE = 5000; // rows per request, ~2 MB
 
@@ -45,6 +47,7 @@ export default function Import({ me, onLogout }) {
     }
     input.value = '';
     setBusy(false);
+    play('ok');
     refresh();
   }
 
@@ -59,7 +62,10 @@ export default function Import({ me, onLogout }) {
           {me.imageUrl && <img src={me.imageUrl} alt="" />}
           <div><b>{me.displayName}</b><p className="sub">Connected to Spotify</p></div>
         </div>
-        <button className="button ghost" onClick={onLogout}>Log out</button>
+        <div className="account-actions">
+          <button className="button ghost" onClick={onLogout}>Log out</button>
+          <SoundToggle />
+        </div>
       </section>
 
       <section className="panel">

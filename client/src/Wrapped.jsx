@@ -3,6 +3,7 @@ import { toPng } from 'html-to-image';
 import { get, fmt, plural } from './api.js';
 import { useCoverColor } from './coverColor.js';
 import { Art, Liked } from './ui.jsx';
+import { play } from './sound.js';
 
 const todayStr = () => new Date().toLocaleDateString('en-CA');
 const CHOICES = [
@@ -189,6 +190,7 @@ function Story({ data, title, onExit }) {
       const url = await toPng(cardRef.current.querySelector('.story-card'), { pixelRatio: 3, cacheBust: true });
       const link = Object.assign(document.createElement('a'), { href: url, download: `echoes-wrapped-${i + 1}.png` });
       link.click();
+      play('ok');
     } finally {
       setSaving(false);
     }

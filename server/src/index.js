@@ -1,9 +1,12 @@
 // Local server: the API plus the background jobs that run nonstop (on Vercel, /api/cron does their work instead).
+import dns from 'node:dns';
 import { app, connectDb } from './app.js';
 import { startPoller } from './poller.js';
 import { startEnricher } from './enrich.js';
 import { startLibrarySync } from './library.js';
 
+// Some Windows setups hand Node a DNS server (127.0.0.1) that refuses the SRV lookup mongodb+srv needs.
+dns.setServers(['1.1.1.1', '8.8.8.8']);
 await connectDb();
 console.log('Connected to MongoDB');
 startPoller();

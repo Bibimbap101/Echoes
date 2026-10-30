@@ -17,7 +17,7 @@ function ago(date) {
 export default function Home({ me }) {
   const today = useApi('/api/stats/summary?range=today');
   const week = useApi('/api/stats/summary?range=7d');
-  const artists = useApi('/api/stats/top/artists?range=7d&limit=6');
+  const artists = useApi('/api/stats/top/artists?range=7d&limit=12');
   const tracks = useApi('/api/stats/top/tracks?range=7d&limit=5');
   const recent = useApi('/api/stats/recent?limit=10');
 
@@ -52,7 +52,7 @@ export default function Home({ me }) {
       {artists.data?.items.length > 0 && (
         <section>
           <div className="shelf-head"><h2>Your top artists this week</h2><a href="#/top">Show all</a></div>
-          <div className="tiles">
+          <div className="tiles one-row">
             {artists.data.items.map((a) => (
               <RowLink key={a.id} href={a.spotifyUrl} className="tile">
                 <Art src={a.image} round />
@@ -64,6 +64,7 @@ export default function Home({ me }) {
         </section>
       )}
 
+      <div className="pair">
       {tracks.data?.items.length > 0 && (
         <section>
           <div className="shelf-head"><h2>Top tracks this week</h2><a href="#/top">Show all</a></div>
@@ -86,6 +87,7 @@ export default function Home({ me }) {
           </div>
         </section>
       )}
+      </div>
 
       {week.error && <p className="error">Couldn't load your stats: {week.error.message}</p>}
     </div>
