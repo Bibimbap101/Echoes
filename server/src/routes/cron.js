@@ -5,7 +5,7 @@ import { syncLibrary } from '../library.js';
 import { enrichFor } from '../enrich.js';
 
 const LIBRARY_EVERY_MS = 6 * 3600_000;
-const ENRICH_MS = 15_000; // cron-job.org gives up after 30s, so answer well before that
+const ANSWER_BY_MS = 24_000; // cron-job.org gives up after 30s, so answer well before that
 
 export const cronRouter = Router();
 
@@ -14,6 +14,7 @@ export const cronRouter = Router();
 cronRouter.get('/', async (req, res) => {
   const secret = process.env.CRON_SECRET;
   if (!secret || req.get('authorization') !== `Bearer ${secret}`) return res.sendStatus(401);
+  const started = Date.now();
 
   const report = { users: [] };
   for (const user of await User.find()) {
@@ -27,7 +28,7 @@ cronRouter.get('/', async (req, res) => {
     report.users.push(r);
   }
   try {
-    report.covers = await enrichFor(ENRICH_MS);
+    report.covers = await enrichFor(ANSWER_BY_MS - (Date.now() - started)); // whatever time the polling left over
   } catch (err) {
     report.coversError = err.message;
   }

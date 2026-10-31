@@ -5,6 +5,8 @@ import { spotifyGet } from './spotify.js';
 
 // shortcut: Spotify publishes no Dev Mode rate limit; 1 lookup/sec stays well clear. Lower it if 429s never show up.
 const PAUSE_MS = 1000;
+// The 30-minute check only gets a few seconds, so it goes faster. spotifyGet still waits out any 429.
+const CRON_PAUSE_MS = 300;
 const IDLE_MS = 60_000;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -78,7 +80,7 @@ export async function enrichFor(ms) {
     const user = await User.findOne();
     if (!user || !(await enrichNext(user))) break;
     done++;
-    await sleep(PAUSE_MS);
+    await sleep(CRON_PAUSE_MS);
   }
   return done;
 }
