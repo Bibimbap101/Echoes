@@ -5,8 +5,6 @@ import { spotifyGet } from './spotify.js';
 
 // shortcut: Spotify publishes no Dev Mode rate limit; 1 lookup/sec stays well clear. Lower it if 429s never show up.
 const PAUSE_MS = 1000;
-// The 30-minute check only gets a few seconds, so it goes faster. spotifyGet still waits out any 429.
-const CRON_PAUSE_MS = 300;
 const IDLE_MS = 60_000;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -46,11 +44,15 @@ async function lookup(user, path) {
     return await spotifyGet(user, path);
   } catch (err) {
     if (err.spotifyStatus === 404 || err.spotifyStatus === 400) return null;
+    if (err.spotifyStatus === 429) {
+      await User.updateOne({ _id: user._id }, { enrichPausedUntil: new Date(Date.now() + err.retryAfter * 1000) });
+    }
     throw err;
   }
 }
 
 async function enrichNext(user) {
+  if (user.enrichPausedUntil > Date.now()) return false;
   // Artists first, so each newly looked-up track gets its artist photo right after.
   const artist = await Artist.findOne({ enrichedAt: null });
   if (artist) {
@@ -80,7 +82,7 @@ export async function enrichFor(ms) {
     const user = await User.findOne();
     if (!user || !(await enrichNext(user))) break;
     done++;
-    await sleep(CRON_PAUSE_MS);
+    await sleep(PAUSE_MS);
   }
   return done;
 }

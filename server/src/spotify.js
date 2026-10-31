@@ -1,6 +1,7 @@
 const ACCOUNTS = 'https://accounts.spotify.com';
 const API = 'https://api.spotify.com/v1';
 const MAX_RETRIES = 5;
+const MAX_WAIT_S = 10; // longer 429 waits (Spotify has sent 15 hours) are thrown, not slept through
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -45,8 +46,9 @@ export async function spotifyGet(user, path) {
     });
     if (res.ok) return res.status === 204 ? null : res.json(); // 204 = nothing (e.g. nothing playing)
 
-    if (res.status === 429 && attempt < MAX_RETRIES) {
-      await sleep((Number(res.headers.get('retry-after')) || 1) * 1000);
+    const retryAfter = Number(res.headers.get('retry-after')) || 1;
+    if (res.status === 429 && attempt < MAX_RETRIES && retryAfter <= MAX_WAIT_S) {
+      await sleep(retryAfter * 1000);
       continue;
     }
     if (res.status === 401 && attempt === 0) {
@@ -56,6 +58,7 @@ export async function spotifyGet(user, path) {
     const err = new Error(`Spotify ${res.status} on ${path}: ${await res.text()}`);
     err.status = res.status === 401 ? 401 : 502;
     err.spotifyStatus = res.status;
+    err.retryAfter = retryAfter;
     throw err;
   }
 }
