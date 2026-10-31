@@ -3,8 +3,8 @@ import { Track } from './models/Track.js';
 import { Artist } from './models/Artist.js';
 import { spotifyGet } from './spotify.js';
 
-// shortcut: Spotify publishes no Dev Mode rate limit; 1 lookup/sec stays well clear. Lower it if 429s never show up.
-const PAUSE_MS = 1000;
+// shortcut: Spotify publishes no Dev Mode limit; 1 lookup/sec ran into hours-long blocks, so 1 per 5s. Slow it more if blocks return.
+const PAUSE_MS = 5000;
 // shortcut: the link preview has no known limit; 40 back-to-back calls all passed. Slow this down if it starts failing.
 const COVER_PAUSE_MS = 200;
 const IDLE_MS = 60_000;
@@ -46,10 +46,7 @@ async function lookup(user, path) {
     return await spotifyGet(user, path);
   } catch (err) {
     if (err.spotifyStatus === 404 || err.spotifyStatus === 400) return null;
-    if (err.spotifyStatus === 429) {
-      await User.updateOne({ _id: user._id }, { enrichPausedUntil: new Date(Date.now() + err.retryAfter * 1000) });
-    }
-    throw err;
+    throw err; // a long 429 already paused everyone inside spotifyGet
   }
 }
 

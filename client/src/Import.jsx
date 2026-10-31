@@ -76,8 +76,8 @@ export default function Import({ me, onLogout }) {
             <li><b>{status.artists.done.toLocaleString()}</b> / {status.artists.total.toLocaleString()} artists have photos</li>
             {status.pausedUntil && (
               <li className="sub">
-                Spotify's daily limit hit. Artist photos and song details resume at{' '}
-                {new Date(status.pausedUntil).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}.
+                Spotify's limit hit. Echoes stops asking Spotify until{' '}
+                {new Date(status.pausedUntil).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' })}.
               </li>
             )}
           </ul>

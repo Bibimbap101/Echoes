@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema(
     accessToken: { type: String, required: true, set: seal, get: unseal },
     refreshToken: { type: String, required: true, set: seal, get: unseal },
     tokenExpiresAt: { type: Date, required: true },
-    enrichPausedUntil: Date, // Spotify said "slow down" for a long time; no cover lookups until then
+    enrichPausedUntil: Date, // Spotify blocked the app for a long time; no Spotify calls at all until then
     library: {
       savedAlbums: Number,
       playlists: Number,

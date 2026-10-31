@@ -32,3 +32,11 @@ test('waits out a 429 then succeeds', async () => {
   assert.deepEqual(await spotifyGet(fakeUser(3600_000), '/me'), { ok: true });
   assert.equal(n, 2);
 });
+
+test('asks Spotify nothing while the app is paused', async () => {
+  let n = 0;
+  globalThis.fetch = async () => (n++, json(200, {}));
+  const user = { ...fakeUser(3600_000), enrichPausedUntil: new Date(Date.now() + 60_000) };
+  await assert.rejects(spotifyGet(user, '/me'), { status: 503 });
+  assert.equal(n, 0);
+});

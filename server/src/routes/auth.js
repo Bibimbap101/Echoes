@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import crypto from 'node:crypto';
 import { User } from '../models/User.js';
-import { exchangeCode, applyTokens } from '../spotify.js';
+import { exchangeCode, applyTokens, pauseSpotify, LONG_PAUSE_S } from '../spotify.js';
+import { TZ } from '../stats.js';
 import { pollUser } from '../poller.js';
 import { syncLibrary } from '../library.js';
 
@@ -22,9 +23,14 @@ const cookieOpts = { httpOnly: true, sameSite: 'lax', signed: true, secure: Bool
 export const redirectUri = (req) =>
   process.env.VERCEL ? `https://${req.get('x-forwarded-host') ?? req.get('host')}/api/auth/callback` : process.env.SPOTIFY_REDIRECT_URI;
 
+const pausedText = (until) =>
+  `Spotify has paused Echoes for a while (too many requests). Try logging in again after ${until.toLocaleString('en-US', { timeZone: TZ, dateStyle: 'medium', timeStyle: 'short' })}.`;
+
 export const authRouter = Router();
 
-authRouter.get('/login', (req, res) => {
+authRouter.get('/login', async (req, res) => {
+  const paused = await User.findOne({ enrichPausedUntil: { $gt: new Date() } });
+  if (paused) return res.status(503).send(pausedText(paused.enrichPausedUntil)); // don't spend a Spotify call we know fails
   const state = crypto.randomBytes(16).toString('hex');
   res.cookie('oauth_state', state, { ...cookieOpts, maxAge: 10 * 60_000 });
   const params = new URLSearchParams({
@@ -48,6 +54,10 @@ authRouter.get('/callback', async (req, res) => {
   const meRes = await fetch('https://api.spotify.com/v1/me', {
     headers: { Authorization: `Bearer ${tokens.access_token}` },
   });
+  if (meRes.status === 429) {
+    const header = meRes.headers.get('retry-after');
+    return res.status(503).send(pausedText(await pauseSpotify(Math.max(Number(header ?? 0), LONG_PAUSE_S))));
+  }
   // 403 here usually means this account isn't on the app's User Management allowlist.
   if (!meRes.ok) return res.status(meRes.status).send(`Spotify said ${meRes.status}: ${await meRes.text()}`);
   const me = await meRes.json();

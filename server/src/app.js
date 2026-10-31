@@ -25,10 +25,10 @@ app.use('/api/import', importRouter);
 app.use('/api/stats', statsRouter);
 app.use('/api/cron', cronRouter);
 
-// Asks Spotify live, so a working response also proves token refresh works.
-app.get('/api/me', requireUser, async (req, res) => {
-  const me = await spotifyGet(req.user, '/me');
-  res.json({ id: me.id, displayName: me.display_name, imageUrl: me.images?.[0]?.url ?? null });
+// From what login saved: no Spotify call per page load, and a Spotify block doesn't log you out.
+app.get('/api/me', requireUser, (req, res) => {
+  const { spotifyId: id, displayName, imageUrl } = req.user;
+  res.json({ id, displayName, imageUrl: imageUrl ?? null });
 });
 
 // What's playing right now, or null. Podcasts and ads come back as null too.
