@@ -1,0 +1,7 @@
+.env
+.claude
+my_spotify_data/
+*.zip
+node_modules/
+dist/
+.env.local

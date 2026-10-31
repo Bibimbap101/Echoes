@@ -4,3 +4,6 @@ dist/
 # Your Spotify export. It's personal data.
 my_spotify_data/
 *.zip
+
+.vercel
+.env*
