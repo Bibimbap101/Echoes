@@ -90,6 +90,9 @@ export default function App() {
     return () => removeEventListener('hashchange', onHash);
   }, []);
 
+  // A new page starts at its top (phones scroll the window, wider screens scroll the panel)
+  useEffect(() => { scrollTo(0, 0); document.querySelector('.main')?.scrollTo(0, 0); }, [page]);
+
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST' });
     forgetCache(); // the next person on this browser shouldn't see your cached stats

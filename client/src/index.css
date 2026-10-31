@@ -50,11 +50,12 @@ h1, h2, p { margin: 0; }
 .nav[aria-current='page'] svg { color: var(--acc); }
 .nav[aria-current='page'] { color: var(--text); background: var(--raised); }
 /* Bottom of the sidebar: you + what you're playing, then a row of quick buttons */
-.me { margin-top: auto; display: grid; gap: 10px; padding: 12px 8px 0; border-top: 1px solid var(--pill); }
+.me { margin-top: auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 12px 8px 0; border-top: 1px solid var(--pill); }
 .me-who { display: flex; align-items: center; gap: 12px; padding: 0 4px; font-size: 0.875rem; }
 .me-who img, .me-who .ph { width: 38px; height: 38px; border-radius: 50%; flex: none; object-fit: cover; transition: box-shadow 0.4s ease; }
 .me-who img.live { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--acc); } /* green ring = listening right now */
-.me-who .sub { display: flex; align-items: center; font-size: 0.78rem; }
+.me-who .title { min-width: 0; }
+.me-who .sub { font-size: 0.78rem; } /* block, so a long song name ends in … instead of spilling out */
 .me-bar { display: flex; justify-content: space-between; }
 .icon-btn { display: grid; place-items: center; width: 36px; height: 36px; flex: none; border: 0; border-radius: 50%; background: none; color: var(--sub); cursor: pointer; transition: color 0.15s, background-color 0.15s, transform 0.1s; }
 .icon-btn:hover { color: var(--text); background: var(--hover); }
@@ -74,7 +75,7 @@ h1, h2, p { margin: 0; }
   background-color: var(--ambient, transparent); opacity: 0.6; transition: background-color 1.2s ease;
   mask-image: linear-gradient(#000 0%, rgb(0 0 0 / 0.5) 45%, transparent 100%);
 }
-.page { display: grid; gap: 28px; max-width: 1800px; animation: fade 0.25s ease-out; }
+.page { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; max-width: 1800px; animation: fade 0.25s ease-out; }
 
 /* Hero: the big colored rectangle. Its color comes from the cover/photo. */
 .hero {
@@ -94,8 +95,8 @@ h1, h2, p { margin: 0; }
 
 h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; }
 h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.025em; }
-.shelf-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
-.shelf-head a { color: var(--sub); font-size: 0.875rem; font-weight: 700; }
+.shelf-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+.shelf-head a { color: var(--sub); font-size: 0.875rem; font-weight: 700; white-space: nowrap; }
 .shelf-head a:hover { color: var(--text); text-decoration: underline; }
 
 /* Pills */
@@ -121,7 +122,7 @@ h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.025em; }
 .tile p { font-weight: 700; margin-top: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Rows: ranked lists and recently played */
-.rows { margin: 0 -12px; }
+.rows { margin: 0 -12px; container-type: inline-size; } /* rows fit their own width, not the screen's (sidebar open, side-by-side lists) */
 .row {
   display: grid; grid-template-columns: 28px 44px 48px minmax(0, 1fr) 80px 80px 28px; gap: 12px; align-items: center;
   padding: 8px 12px; border-radius: 6px; transition: background-color 0.15s;
@@ -135,11 +136,18 @@ h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.025em; }
 .title { min-width: 0; }
 .title b, .title span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .title b { font-weight: 700; }
+.title .sub > span { display: inline-flex; } /* the equalizer and "Paused" stay inline before the artist */
 .rank { color: var(--sub); text-align: right; font-variant-numeric: tabular-nums; }
 .chg { font-size: 0.75rem; font-weight: 800; }
 .chg.same { color: var(--sub); }
 .open { color: var(--sub); opacity: 0; transition: opacity 0.15s; text-align: center; }
 .row:hover .open, .row:focus-visible .open { opacity: 1; }
+/* Narrow lists drop Minutes so titles keep their room */
+@container (max-width: 600px) {
+  .row { grid-template-columns: 24px 36px 44px minmax(0, 1fr) 56px; }
+  .row .mins, .row .open { display: none; }
+  .row img, .row .ph { width: 44px; height: 44px; }
+}
 
 /* Top page: category tabs with a sliding underline */
 .tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--pill); }
@@ -174,10 +182,10 @@ h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.025em; }
 /* Login + import */
 .center { min-height: 100vh; display: grid; place-content: center; gap: 28px; text-align: center; justify-items: center; }
 .center .logo { font-size: 3.5rem; padding: 0; }
-.panel { display: grid; gap: 16px; padding: 24px; border-radius: 12px; background: var(--raised); max-width: 560px; justify-items: start; }
+.panel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 24px; border-radius: 12px; background: var(--raised); max-width: 560px; justify-items: start; }
 .account { display: flex; align-items: center; gap: 16px; }
 .account img { width: 64px; height: 64px; border-radius: 50%; }
-.account-actions { display: flex; align-items: center; gap: 12px; }
+.account-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .stats, .log { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
 .stats b { color: var(--acc); }
 .log { font-size: 0.85rem; color: var(--sub); }
@@ -186,7 +194,7 @@ h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.025em; }
 .stat-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
 .tile-stat { background: var(--raised); border-radius: 10px; padding: 16px; display: grid; gap: 2px; align-content: start; }
 .tile-stat b { font-size: 1.9rem; font-weight: 900; letter-spacing: -0.035em; font-variant-numeric: tabular-nums; }
-.box { background: var(--raised); border-radius: 10px; padding: 20px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.box { background: var(--raised); border-radius: 10px; padding: 20px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; align-content: start; min-width: 0; }
 .box h2 { font-size: 1.15rem; }
 .box-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .white { color: var(--text); }
@@ -223,7 +231,7 @@ h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.025em; }
 .wrapped-start .logo { padding: 0; font-size: 1.1rem; }
 .story { display: grid; gap: 14px; justify-items: center; }
 /* The story always fits the screen height, so Back/Next/Save never need a scroll. */
-.story { --story-w: min(360px, 100%, calc((100dvh - 250px) * 9 / 16)); }
+.story { --story-w: min(360px, 100%, max(220px, calc((100dvh - 250px) * 9 / 16))); } /* very short screens (phone on its side) scroll instead of shrinking it to a stamp */
 .story-bars { display: flex; gap: 4px; width: var(--story-w); }
 .story-bars i { flex: 1; height: 3px; border-radius: 3px; background: rgb(255 255 255 / 0.25); transition: background-color 0.2s; }
 .story-bars i.on { background: var(--text); }
@@ -313,7 +321,6 @@ h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.025em; }
 .np img, .np .ph { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; background: var(--pill); box-shadow: 0 4px 14px rgb(0 0 0 / 0.35); }
 .np-art { animation: np-art 0.45s cubic-bezier(0.2, 0.8, 0.2, 1); } /* a new song's cover settles in */
 @keyframes np-art { from { transform: scale(0.85); opacity: 0; } }
-.np .title .sub { display: flex; align-items: center; }
 .np-time { display: flex; align-items: center; gap: 10px; max-width: 600px; width: 100%; justify-self: center; font-variant-numeric: tabular-nums; font-size: 0.75rem; }
 .np-bar { flex: 1; height: 4px; border-radius: 2px; background: rgb(255 255 255 / 0.18); overflow: hidden; }
 .np-bar i { display: block; height: 100%; border-radius: 2px; background: var(--text); transition: width 1s linear; }
@@ -328,8 +335,8 @@ h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.025em; }
 
 /* Settings */
 .settings .panel { max-width: 640px; width: 100%; justify-items: stretch; }
-.setting { display: flex; align-items: center; justify-content: space-between; gap: 16px; cursor: pointer; }
-.setting > span { display: grid; gap: 2px; }
+.setting { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; cursor: pointer; }
+.setting > span { display: grid; gap: 2px; flex: 1 1 10rem; } /* a wide dropdown drops below its label on small phones */
 .switch {
   appearance: none; flex: none; width: 40px; height: 24px; margin: 0; border-radius: 999px; background: #535353; position: relative; cursor: pointer;
   transition: background-color 0.2s;
@@ -348,7 +355,7 @@ h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.025em; }
 [data-motion='off'] *, [data-motion='off'] *::before, [data-motion='off'] *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 
 /* Closed sidebar: an icon rail, names show as a tip on hover */
-@media (min-width: 761px) {
+@media (min-width: 761px) and (min-height: 481px) {
   .rail .side { padding-inline: 8px; align-items: center; }
   .rail .side-top { flex-direction: column; gap: 12px; }
   .rail .logo { padding: 0; }
@@ -364,8 +371,8 @@ h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.025em; }
   .rail .me-bar { flex-direction: column; gap: 2px; }
 }
 
-/* Phone: sidebar becomes a frosted tab bar at the bottom */
-@media (max-width: 760px) {
+/* Phone (or a phone on its side): sidebar becomes a frosted tab bar at the bottom */
+@media (max-width: 760px), (max-height: 480px) {
   .shell { display: block; padding: 0; height: auto; }
   .main { border-radius: 0; padding: 20px 16px 96px; min-height: 100vh; overflow: visible; }
   .side {
@@ -378,9 +385,6 @@ h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.025em; }
   .nav[aria-current='page'] { background: none; color: var(--acc); }
   .hero, .hero.art-left { grid-template-columns: 1fr; padding: 22px; }
   .hero.art-left .hero-art { order: -1; }
-  .row { grid-template-columns: 24px 36px 44px minmax(0, 1fr) 56px; }
-  .row .mins, .row .open { display: none; }
-  .row img, .row .ph { width: 44px; height: 44px; }
   .controls { top: -20px; }
   .controls .pills { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -16px; padding: 0 16px; } /* swipe, don't wrap */
   .controls .pills::-webkit-scrollbar { display: none; }
@@ -394,7 +398,7 @@ h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.025em; }
   .np-time > span { display: none; }
   .np-open span { display: none; } /* icon only on phones */
   .np-open { padding: 8px; }
-  .tiles { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+  .tiles { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
   .tiles.one-row > :nth-child(n + 7) { display: none; } /* phones keep the top 6 */
 }
 
