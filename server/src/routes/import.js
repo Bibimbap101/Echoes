@@ -22,7 +22,7 @@ importRouter.get('/status', requireUser, async (req, res) => {
   ]);
   const [tracksTotal, tracksDone, artistsTotal, artistsDone] = await Promise.all([
     Track.countDocuments(),
-    Track.countDocuments({ enrichedAt: { $ne: null } }),
+    Track.countDocuments({ albumImage: { $nin: [null, ''] } }),
     Artist.countDocuments(),
     Artist.countDocuments({ enrichedAt: { $ne: null } }),
   ]);
@@ -30,5 +30,6 @@ importRouter.get('/status', requireUser, async (req, res) => {
     plays: Object.fromEntries(bySource.map((s) => [s._id, s.n])),
     tracks: { done: tracksDone, total: tracksTotal },
     artists: { done: artistsDone, total: artistsTotal },
+    pausedUntil: req.user.enrichPausedUntil > Date.now() ? req.user.enrichPausedUntil : null,
   });
 });

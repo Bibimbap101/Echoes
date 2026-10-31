@@ -5,6 +5,8 @@ import { spotifyGet } from './spotify.js';
 
 // shortcut: Spotify publishes no Dev Mode rate limit; 1 lookup/sec stays well clear. Lower it if 429s never show up.
 const PAUSE_MS = 1000;
+// shortcut: the link preview has no known limit; 40 back-to-back calls all passed. Slow this down if it starts failing.
+const COVER_PAUSE_MS = 200;
 const IDLE_MS = 60_000;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -51,8 +53,24 @@ async function lookup(user, path) {
   }
 }
 
+// Spotify's public link preview: just the cover, but no login and no API quota. '' = it has none.
+async function previewCover(id) {
+  const res = await fetch(`https://open.spotify.com/oembed?url=https://open.spotify.com/track/${id}`);
+  if (res.status === 404 || res.status === 400) return '';
+  if (!res.ok) throw new Error(`Spotify link preview ${res.status} for ${id}`);
+  return (await res.json()).thumbnail_url ?? '';
+}
+
+// Does one lookup. Returns how long to wait before the next one, or 0 when there's nothing to do right now.
 async function enrichNext(user) {
-  if (user.enrichPausedUntil > Date.now()) return false;
+  // Covers first, from the link preview. The API lookup below swaps in a bigger one later.
+  const bare = await Track.findOne({ albumImage: null }).sort({ playCount: -1 });
+  if (bare) {
+    await Track.updateOne({ _id: bare._id }, { albumImage: await previewCover(bare._id) });
+    return COVER_PAUSE_MS;
+  }
+
+  if (user.enrichPausedUntil > Date.now()) return 0;
   // Artists first, so each newly looked-up track gets its artist photo right after.
   const artist = await Artist.findOne({ enrichedAt: null });
   if (artist) {
@@ -63,15 +81,15 @@ async function enrichNext(user) {
         ? { name: a.name, image: a.images?.[0]?.url, genres: a.genres ?? [], enrichedAt: new Date() }
         : { enrichedAt: new Date(), enrichFailed: true },
     );
-    return true;
+    return PAUSE_MS;
   }
 
   const track = await Track.findOne({ enrichedAt: null }).sort({ playCount: -1 });
-  if (!track) return false;
+  if (!track) return 0;
   const t = await lookup(user, `/tracks/${track._id}`);
   if (t) await saveTrack({ ...t, id: track._id }); // keep the id we were asked for, even if Spotify relinked it
   else await Track.updateOne({ _id: track._id }, { enrichedAt: new Date(), enrichFailed: true });
-  return true;
+  return PAUSE_MS;
 }
 
 // Fills in as many covers/photos as fit in `ms` (used by /api/cron, where nothing runs forever). Returns how many.
@@ -80,9 +98,10 @@ export async function enrichFor(ms) {
   let done = 0;
   while (Date.now() < stop) {
     const user = await User.findOne();
-    if (!user || !(await enrichNext(user))) break;
+    const wait = user && (await enrichNext(user));
+    if (!wait) break;
     done++;
-    await sleep(PAUSE_MS);
+    await sleep(wait);
   }
   return done;
 }
@@ -92,8 +111,8 @@ export async function startEnricher() {
   for (;;) {
     try {
       const user = await User.findOne();
-      const worked = user && (await enrichNext(user));
-      await sleep(worked ? PAUSE_MS : IDLE_MS);
+      const wait = user && (await enrichNext(user));
+      await sleep(wait || IDLE_MS);
     } catch (err) {
       console.error('Enrich error:', err.message);
       await sleep(IDLE_MS);

@@ -74,6 +74,12 @@ export default function Import({ me, onLogout }) {
             <li><b>{plays.toLocaleString()}</b> plays saved ({(status.plays.poll ?? 0).toLocaleString()} from the 30-minute check)</li>
             <li><b>{status.tracks.done.toLocaleString()}</b> / {status.tracks.total.toLocaleString()} songs have covers</li>
             <li><b>{status.artists.done.toLocaleString()}</b> / {status.artists.total.toLocaleString()} artists have photos</li>
+            {status.pausedUntil && (
+              <li className="sub">
+                Spotify's daily limit hit. Artist photos and song details resume at{' '}
+                {new Date(status.pausedUntil).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}.
+              </li>
+            )}
           </ul>
         )}
         <label className="button">
