@@ -5,6 +5,7 @@ import { syncLibrary } from '../library.js';
 import { enrichFor } from '../enrich.js';
 
 const LIBRARY_EVERY_MS = 6 * 3600_000;
+const MIN_GAP_MS = 25 * 60_000; // a timer set to every minute once spent Spotify's whole daily quota
 const ANSWER_BY_MS = 24_000; // cron-job.org gives up after 30s, so answer well before that
 
 export const cronRouter = Router();
@@ -15,6 +16,8 @@ cronRouter.get('/', async (req, res) => {
   const secret = process.env.CRON_SECRET;
   if (!secret || req.get('authorization') !== `Bearer ${secret}`) return res.sendStatus(401);
   const started = Date.now();
+  if (await User.exists({ cronAt: { $gt: new Date(started - MIN_GAP_MS) } })) return res.json({ skipped: 'ran less than 25 minutes ago' });
+  await User.updateMany({}, { cronAt: new Date(started) });
 
   const report = { users: [] };
   for (const user of await User.find()) {

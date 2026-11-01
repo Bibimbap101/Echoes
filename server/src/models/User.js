@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema(
     refreshToken: { type: String, required: true, set: seal, get: unseal },
     tokenExpiresAt: { type: Date, required: true },
     enrichPausedUntil: Date, // Spotify blocked the app for a long time; no Spotify calls at all until then
+    cronAt: Date, // last time /api/cron did real work
     library: {
       savedAlbums: Number,
       playlists: Number,
