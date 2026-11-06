@@ -7,6 +7,8 @@ import { statsRouter } from './routes/stats.js';
 import { cronRouter } from './routes/cron.js';
 import { spotifyGet } from './spotify.js';
 import { LikedSong } from './models/LikedSong.js';
+import { User } from './models/User.js';
+import { pollUser } from './poller.js';
 
 for (const key of ['SPOTIFY_CLIENT_ID', 'SPOTIFY_CLIENT_SECRET', 'SPOTIFY_REDIRECT_URI', 'SESSION_SECRET']) {
   if (!process.env[key]) throw new Error(`Missing ${key} in .env (see .env.example)`);
@@ -36,6 +38,11 @@ app.get('/api/me', requireUser, (req, res) => {
 app.get('/api/now-playing', requireUser, async (req, res) => {
   const now = await spotifyGet(req.user, '/me/player/currently-playing');
   const t = now?.currently_playing_type === 'track' ? now.item : null;
+  // Song changed (or stopped): the last one just ended, so save plays now instead of waiting for the 30-minute poll.
+  // The filter makes it one poll per change, even with two tabs open. Awaited so a serverless function isn't cut off.
+  const id = t?.id ?? null;
+  const changed = await User.updateOne({ _id: req.user._id, nowTrackId: { $ne: id } }, { nowTrackId: id });
+  if (changed.modifiedCount) await pollUser(req.user).catch((err) => console.error('Song-change poll failed:', err.message));
   if (!t) return res.json(null);
   res.json({
     id: t.id, name: t.name, artist: t.artists.map((a) => a.name).join(', '), image: t.album?.images?.[0]?.url ?? null,

@@ -26,7 +26,10 @@ export function forgetCache() {
   try { sessionStorage.clear(); } catch {}
 }
 
+const REFRESH_MS = 60_000;
+
 // Fetches `path` (skips when null). Shows the cached answer (or the old data) while fresh data loads, so nothing flashes.
+// Then re-fetches quietly every minute and when you come back to the tab, so new plays show up without a reload.
 export function useApi(path) {
   const [state, setState] = useState(() => ({ data: path && cached(path), error: null, loading: Boolean(path) }));
   useEffect(() => {
@@ -37,7 +40,19 @@ export function useApi(path) {
       (data) => { remember(path, data); if (live) setState({ data, error: null, loading: false }); },
       (error) => live && setState((s) => ({ ...s, error, loading: false })),
     );
-    return () => { live = false; };
+    const quiet = () => {
+      if (document.hidden) return;
+      // A failed background refresh keeps what's on screen instead of showing an error.
+      // Same answer as before: leave the page alone so nothing re-renders or replays its animation.
+      get(path).then((data) => {
+        if (JSON.stringify(data) === JSON.stringify(cache.get(path))) return;
+        remember(path, data);
+        if (live) setState({ data, error: null, loading: false });
+      }, () => {});
+    };
+    const id = setInterval(quiet, REFRESH_MS);
+    addEventListener('visibilitychange', quiet);
+    return () => { live = false; clearInterval(id); removeEventListener('visibilitychange', quiet); };
   }, [path]);
   return state;
 }

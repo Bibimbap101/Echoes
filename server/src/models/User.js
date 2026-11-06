@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema(
     tokenExpiresAt: { type: Date, required: true },
     enrichPausedUntil: Date, // Spotify blocked the app for a long time; no Spotify calls at all until then
     cronAt: Date, // last time /api/cron did real work
+    nowTrackId: String, // song /api/now-playing last saw; when it changes, the one before just ended
     library: {
       savedAlbums: Number,
       playlists: Number,
