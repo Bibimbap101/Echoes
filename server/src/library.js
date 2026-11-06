@@ -50,7 +50,7 @@ export async function syncLibrary(user) {
 
 export function startLibrarySync() {
   const run = async () => {
-    for (const user of await User.find()) {
+    for (const user of await User.find({ spotifyId: { $exists: true } })) {
       try {
         console.log(`Library: synced ${await syncLibrary(user)} liked songs for ${user.displayName}`);
       } catch (err) {

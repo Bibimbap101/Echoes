@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Home from './Home.jsx';
 import Top from './Top.jsx';
 import Import from './Import.jsx';
@@ -8,6 +8,7 @@ import NowPlaying, { useNowPlaying } from './NowPlaying.jsx';
 import Settings from './Settings.jsx';
 import { prefs, setPref } from './prefs.js';
 import Privacy from './Privacy.jsx';
+import LastfmSetup from './LastfmSetup.jsx';
 import { Eq, SoundToggle } from './ui.jsx';
 import { forgetCache } from './api.js';
 
@@ -80,6 +81,8 @@ export default function App() {
   const error = new URLSearchParams(location.search).get('error');
   const { np, at } = useNowPlaying(Boolean(me));
   const side = useSidebar();
+  const [setupDone, setSetupDone] = useState(false);
+  const finishSetup = useCallback(() => setSetupDone(true), []);
 
   useEffect(() => {
     fetch('/api/me')
@@ -111,8 +114,15 @@ export default function App() {
         <p className="logo"><img src="/icon.svg" alt="" />Echoes</p>
         <p className="sub">Your listening, all year round.</p>
         {error && <p className="error">Login didn't work ({error}). Try again.</p>}
-        <a className="button" href="/api/auth/login">Log in with Spotify</a>
-        <a className="sub" href="#/privacy">Privacy</a>
+        <div className="login-main">
+          <a className="button" href="/api/auth/lastfm">Continue with Last.fm</a>
+          <p className="sub">Free. Works with your Spotify.</p>
+        </div>
+        {/* Spotify only lets 5 invited people in (Development Mode), so it's the small link */}
+        <div className="login-foot">
+          <a className="sub" href="/api/auth/login">Invited tester? Log in with Spotify</a>
+          <a className="sub" href="#/privacy">Privacy</a>
+        </div>
       </main>
     );
   }
@@ -141,7 +151,7 @@ export default function App() {
             {me.imageUrl ? <img src={me.imageUrl} alt="" className={np?.isPlaying ? 'live' : ''} /> : <span className="ph round" />}
             <span className="title">
               <b>{me.displayName}</b>
-              <span className="sub">{np?.isPlaying ? <><Eq />{np.name} · {np.artist}</> : 'Connected to Spotify'}</span>
+              <span className="sub">{np?.isPlaying ? <><Eq />{np.name} · {np.artist}</> : me.source === 'lastfm' ? <a href={`https://www.last.fm/user/${encodeURIComponent(me.id)}`} target="_blank" rel="noreferrer">Plays from Last.fm</a> : 'Connected to Spotify'}</span>
             </span>
           </div>
           <div className="me-bar">
@@ -159,7 +169,7 @@ export default function App() {
         <div className="side-drag" {...side.handle} />
       </nav>
       <main className="main">
-        {page === 'home' && <Home me={me} />}
+        {page === 'home' && (me.source === 'lastfm' && !setupDone ? <LastfmSetup me={me} np={np} onDone={finishSetup} /> : <Home me={me} />)}
         {page === 'top' && <Top />}
         {page === 'import' && <Import me={me} onLogout={logout} />}
         {page === 'stats' && <Stats />}

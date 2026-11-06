@@ -9,6 +9,7 @@ import { spotifyGet } from './spotify.js';
 import { LikedSong } from './models/LikedSong.js';
 import { User } from './models/User.js';
 import { pollUser } from './poller.js';
+import { nowPlaying } from './lastfm.js';
 
 for (const key of ['SPOTIFY_CLIENT_ID', 'SPOTIFY_CLIENT_SECRET', 'SPOTIFY_REDIRECT_URI', 'SESSION_SECRET']) {
   if (!process.env[key]) throw new Error(`Missing ${key} in .env (see .env.example)`);
@@ -16,7 +17,9 @@ for (const key of ['SPOTIFY_CLIENT_ID', 'SPOTIFY_CLIENT_SECRET', 'SPOTIFY_REDIRE
 
 // Connects once and reuses it (a serverless function keeps it between requests while warm).
 let connecting;
-export const connectDb = () => (connecting ??= mongoose.connect(process.env.MONGODB_URI ?? 'mongodb://127.0.0.1:27017/echoes'));
+// syncIndexes swaps the old strict spotifyId index for the sparse one, so many Last.fm users (no spotifyId) fit.
+export const connectDb = () =>
+  (connecting ??= mongoose.connect(process.env.MONGODB_URI ?? 'mongodb://127.0.0.1:27017/echoes').then(() => User.syncIndexes()));
 
 export const app = express();
 app.use(async (req, res, next) => { await connectDb(); next(); });
@@ -29,13 +32,14 @@ app.use('/api/cron', cronRouter);
 
 // From what login saved: no Spotify call per page load, and a Spotify block doesn't log you out.
 app.get('/api/me', requireUser, (req, res) => {
-  const { spotifyId: id, displayName, imageUrl } = req.user;
-  res.json({ id, displayName, imageUrl: imageUrl ?? null });
+  const { spotifyId, lastfmName, displayName, imageUrl } = req.user;
+  res.json({ id: spotifyId ?? lastfmName, displayName, imageUrl: imageUrl ?? null, source: lastfmName ? 'lastfm' : 'spotify' });
 });
 
 // What's playing right now, or null. Podcasts and ads come back as null too.
 // shortcut: `liked` is only as fresh as the last library sync (6h); ask /me/tracks/contains if that ever matters.
 app.get('/api/now-playing', requireUser, async (req, res) => {
+  if (req.user.lastfmName) return res.json(await lastfmNow(req.user));
   const now = await spotifyGet(req.user, '/me/player/currently-playing');
   const t = now?.currently_playing_type === 'track' ? now.item : null;
   // Song changed (or stopped): the last one just ended, so save plays now instead of waiting for the 30-minute poll.
@@ -51,6 +55,20 @@ app.get('/api/now-playing', requireUser, async (req, res) => {
     spotifyUrl: t.external_urls?.spotify ?? null,
   });
 });
+
+// Last.fm has no progress or length; matched songs get their Spotify cover and link.
+async function lastfmNow(user) {
+  const t = await nowPlaying(user);
+  const id = t?.trackId ?? null;
+  const changed = await User.updateOne({ _id: user._id, nowTrackId: { $ne: id } }, { nowTrackId: id });
+  if (changed.modifiedCount) await pollUser(user).catch((err) => console.error('Song-change poll failed:', err.message));
+  if (!t) return null;
+  const spotify = !id.startsWith('lfm:');
+  return {
+    id: spotify ? id : null, name: t.name, artist: t.artist, image: t.image, durationMs: null, progressMs: null, isPlaying: true,
+    liked: false, spotifyUrl: spotify ? `https://open.spotify.com/track/${id}` : null,
+  };
+}
 
 app.use((err, req, res, next) => {
   console.error(err);

@@ -94,7 +94,7 @@ export async function enrichFor(ms) {
   const stop = Date.now() + ms;
   let done = 0;
   while (Date.now() < stop) {
-    const user = await User.findOne();
+    const user = await User.findOne({ spotifyId: { $exists: true } }); // lookups need a Spotify login's token
     const wait = user && (await enrichNext(user));
     if (!wait) break;
     done++;
@@ -107,7 +107,7 @@ export async function enrichFor(ms) {
 export async function startEnricher() {
   for (;;) {
     try {
-      const user = await User.findOne();
+      const user = await User.findOne({ spotifyId: { $exists: true } }); // lookups need a Spotify login's token
       const wait = user && (await enrichNext(user));
       await sleep(wait || IDLE_MS);
     } catch (err) {

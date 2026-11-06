@@ -5,6 +5,7 @@ import { exchangeCode, applyTokens, pauseSpotify, LONG_PAUSE_S } from '../spotif
 import { TZ } from '../stats.js';
 import { pollUser } from '../poller.js';
 import { syncLibrary } from '../library.js';
+import { lastfmReady, getSession } from '../lastfm.js';
 
 // Read-only. Liked Songs + saved albums, followed artists, playlists, and what's playing now.
 const SCOPES = [
@@ -67,6 +68,30 @@ authRouter.get('/callback', async (req, res) => {
   const saved = await User.findOneAndUpdate({ spotifyId: me.id }, fields, { upsert: true, new: true });
   pollUser(saved).catch((err) => console.error('First poll failed:', err.message)); // start saving plays right away
   syncLibrary(saved).catch((err) => console.error('First library sync failed:', err.message));
+  res.cookie('uid', saved.id, { ...cookieOpts, maxAge: 365 * 24 * 3600_000 });
+  res.redirect('/');
+});
+
+// Last.fm login: no user limit. Last.fm sends the person back to /lastfm/callback?token=...
+authRouter.get('/lastfm', (req, res) => {
+  if (!lastfmReady()) return res.status(503).send('Last.fm login is not set up yet (LASTFM_API_KEY and LASTFM_SECRET are missing).');
+  // Same site the person is on: the Vercel domain when hosted, the Vite address (from the Spotify redirect) locally.
+  const origin = process.env.VERCEL ? `https://${req.get('x-forwarded-host') ?? req.get('host')}` : new URL(process.env.SPOTIFY_REDIRECT_URI).origin;
+  const cb = `${origin}/api/auth/lastfm/callback`;
+  res.redirect(`https://www.last.fm/api/auth/?${new URLSearchParams({ api_key: process.env.LASTFM_API_KEY, cb })}`);
+});
+
+authRouter.get('/lastfm/callback', async (req, res) => {
+  const { token } = req.query;
+  if (!token) return res.redirect('/?error=lastfm_denied');
+  const session = await getSession(String(token)).catch(() => null); // a token works once and expires in 60 min
+  if (!session?.name) return res.redirect('/?error=lastfm_failed');
+  const saved = await User.findOneAndUpdate(
+    { lastfmName: session.name },
+    { displayName: session.name, lastfmKey: session.key },
+    { upsert: true, new: true },
+  );
+  pollUser(saved).catch((err) => console.error('First Last.fm poll failed:', err.message));
   res.cookie('uid', saved.id, { ...cookieOpts, maxAge: 365 * 24 * 3600_000 });
   res.redirect('/');
 });
