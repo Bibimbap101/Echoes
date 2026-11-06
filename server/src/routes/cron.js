@@ -6,8 +6,7 @@ import { enrichFor } from '../enrich.js';
 
 const LIBRARY_EVERY_MS = 6 * 3600_000;
 const MIN_GAP_MS = 25 * 60_000; // a timer set to every minute once spent Spotify's whole daily quota
-const ANSWER_BY_MS = 24_000;
-const POLL_BY_MS = 18_000; // leaves a few seconds for covers // cron-job.org gives up after 30s, so answer well before that
+const ANSWER_BY_MS = 24_000; // cron-job.org gives up after 30s, so answer well before that
 
 export const cronRouter = Router();
 
@@ -21,14 +20,11 @@ cronRouter.get('/', async (req, res) => {
   await User.updateMany({}, { cronAt: new Date(started) });
 
   const report = { users: [] };
-  // Random order + a time limit: a big first Last.fm backlog can't push the same people past the 30s cutoff every run.
-  const users = (await User.find()).sort(() => Math.random() - 0.5);
-  for (const user of users) {
-    if (Date.now() - started > POLL_BY_MS) break; // the rest get their turn next run
+  for (const user of await User.find()) {
     const r = { name: user.displayName };
     try {
       r.newPlays = await pollUser(user);
-      if (user.spotifyId && !(user.library?.syncedAt > Date.now() - LIBRARY_EVERY_MS)) r.likedSongs = await syncLibrary(user);
+      if (!(user.library?.syncedAt > Date.now() - LIBRARY_EVERY_MS)) r.likedSongs = await syncLibrary(user);
     } catch (err) {
       r.error = err.message;
     }

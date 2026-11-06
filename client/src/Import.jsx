@@ -59,7 +59,7 @@ export default function Import({ me, onLogout }) {
       <section className="panel">
         <div className="account">
           {me.imageUrl && <img src={me.imageUrl} alt="" />}
-          <div><b>{me.displayName}</b><p className="sub">{me.source === 'lastfm' ? 'Plays from Last.fm' : 'Connected to Spotify'}</p></div>
+          <div><b>{me.displayName}</b><p className="sub">Connected to Spotify</p></div>
         </div>
         <div className="account-actions">
           <button className="button ghost" onClick={onLogout}>Log out</button>

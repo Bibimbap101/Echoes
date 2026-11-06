@@ -59,9 +59,7 @@ const coverLookup = [
   { $set: { image: { $first: '$t.albumImage' }, albumId: { $first: '$t.albumId' } } },
 ];
 
-// Last.fm-only songs (lfm:artist|track) have no Spotify page, so they link to Last.fm's (its terms ask for that link).
-const lastfmUrl = (id) => `https://www.last.fm/music/${id.slice(4).split('|').map((s) => encodeURIComponent(s).replace(/%20/g, '+')).join('/_/')}`;
-const openUrl = (kind, id) => (!id ? null : id.startsWith('lfm:') ? lastfmUrl(id) : `https://open.spotify.com/${kind}/${id}`);
+const openUrl = (kind, id) => (id ? `https://open.spotify.com/${kind}/${id}` : null);
 
 const TOP = {
   tracks: {
@@ -159,7 +157,7 @@ export async function top(user, type, query) {
 async function rankTop(user, type, query) {
   const userId = user._id;
   const period = parseRange(query);
-  if (user.spotifyId && SPOTIFY_RANGE[query.range] && type !== 'albums' && type !== 'genres' && !(await historyCovers(userId, period.from))) {
+  if (SPOTIFY_RANGE[query.range] && type !== 'albums' && type !== 'genres' && !(await historyCovers(userId, period.from))) {
     return { source: 'spotify', items: await spotifyTop(user, type, query.range) };
   }
 

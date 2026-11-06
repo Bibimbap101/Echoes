@@ -17,6 +17,5 @@ const trackSchema = new mongoose.Schema({
 });
 
 trackSchema.index({ enrichedAt: 1, playCount: -1 });
-trackSchema.index({ name: 1 }); // Last.fm plays come with names only
 
 export const Track = mongoose.model('Track', trackSchema);
