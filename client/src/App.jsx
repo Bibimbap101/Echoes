@@ -74,6 +74,29 @@ function useSidebar() {
   return { w, rail, dragging, toggle, handle };
 }
 
+// Spotify said 403: this account isn't on the dashboard's User Management list yet.
+function NotOnList() {
+  useEffect(() => {
+    const s = document.createElement('script');
+    s.src = 'https://tenor.com/embed.js'; // turns the div below into the GIF
+    s.async = true;
+    document.body.append(s);
+    return () => s.remove();
+  }, []);
+  return (
+    <main className="center not-listed">
+      <p className="logo"><img src="/icon.svg" alt="" />Echoes</p>
+      <div className="tenor-gif-embed" data-postid="20974962" data-share-method="host" data-aspect-ratio="1" data-width="100%">
+        <a href="https://tenor.com/view/mina-twice-twice-mina-twice-mina-no-mina-no-gif-20974962">Mina Twice GIF</a>
+      </div>
+      <h1>You're not on the list yet</h1>
+      <p className="sub">Send the dev the email you use for Spotify. Once they add you, log in again.</p>
+      <a className="button" href="https://www.instagram.com/bibimbapkr/" target="_blank" rel="noreferrer">Send Email</a>
+      <a className="sub" href="/api/auth/login">Try logging in again</a>
+    </main>
+  );
+}
+
 export default function App() {
   const [me, setMe] = useState(undefined); // undefined = loading, null = logged out
   const [page, setPage] = useState(pageFromHash);
@@ -104,6 +127,8 @@ export default function App() {
   if (!me && page === 'privacy') {
     return <main className="main"><Privacy /><p><a className="sub" href="#/">← Back</a></p></main>;
   }
+
+  if (!me && error === 'not_on_list') return <NotOnList />;
 
   if (!me) {
     return (

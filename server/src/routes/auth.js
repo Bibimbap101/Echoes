@@ -59,6 +59,7 @@ authRouter.get('/callback', async (req, res) => {
     return res.status(503).send(pausedText(await pauseSpotify(Math.max(Number(header ?? 0), LONG_PAUSE_S))));
   }
   // 403 here usually means this account isn't on the app's User Management allowlist.
+  if (meRes.status === 403) return res.redirect('/?error=not_on_list');
   if (!meRes.ok) return res.status(meRes.status).send(`Spotify said ${meRes.status}: ${await meRes.text()}`);
   const me = await meRes.json();
 
